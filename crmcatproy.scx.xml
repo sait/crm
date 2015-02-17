@@ -1,0 +1,196 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1OA128EMV</uniqueid>
+		<timestamp>864128585</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1OA128EMW</uniqueid>
+		<timestamp>1049518341</timestamp>
+		<class>catmsl</class>
+		<classloc>..\..\msllib60\catmsl.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Catmsl1</objname>
+		<parent/>
+		<properties>Height = 355
+Width = 590
+DoCreate = .T.
+Caption = "Catalogo de Proyectos"
+Name = "Catmsl1"
+Marco.Name = "Marco"
+Pags.ErasePage = .T.
+Pags.Page1.Name = "Page1"
+Pags.Name = "Pags"
+Grid1.Column1.Header1.Name = "Header1"
+Grid1.Column1.Text1.Name = "Text1"
+Grid1.Column1.Name = "Column1"
+Grid1.Height = 261
+Grid1.Left = 15
+Grid1.Top = 80
+Grid1.Width = 560
+Grid1.Name = "Grid1"
+agregar.Name = "agregar"
+modificar.Name = "modificar"
+eliminar.Name = "eliminar"
+Excel.Name = "Excel"
+Buscar.Name = "Buscar"
+Imprimir.Name = "Imprimir"
+Cerrar.Name = "Cerrar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+If Not OpenDbf('Proy','NUMPROY') Or;
+	Not OpenDbf('Clientes','NUMCLI')
+	Return .F.
+EndIf
+
+* Crea la relacion hacia Clientes.DBF
+Select Proy
+Set Relation To NUMCLI Into Clientes
+
+* Solo mostrar los proyectos abiertos
+Set Filter To Not COMPLETO
+
+* Muestra la informacion
+This.cAlias = 'Proy'
+This.cCatName = 'CrmCatProy'
+This.FormaCatalogo = 'CrmAddProy'
+This.cAnchos = '50|180|180|60|60'
+This.cTitulos = 'Clave|Cliente|Nombre|Inicio|Meta'
+This.cExprs = 'Proy.NUMPROY|Clientes.NOMCLI|Proy.NOMBRE|MexDate3(Proy.INICIO)|MexDate3(Proy.META)'
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1OA12YILU</uniqueid>
+		<timestamp>864129512</timestamp>
+		<class>cajaverif</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>checkbox</baseclass>
+		<objname>Cajaverif1</objname>
+		<parent>Catmsl1</parent>
+		<properties>Top = 60
+Left = 506
+Height = 16
+Width = 69
+Caption = "\&lt;Ver Todos"
+Name = "Cajaverif1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+If This.Value == .T.
+	* Mostrar todos los proyectos
+	Select Proy
+	Set Filter To
+	ThisForm.Grid1.SetFocus
+Else
+	* Solo mostrar los proyectos abiertos
+	Select Proy
+	Set Filter To Not COMPLETO
+	ThisForm.Grid1.SetFocus
+EndIf
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

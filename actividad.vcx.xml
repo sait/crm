@@ -1,0 +1,275 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Class</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20SZUEH</uniqueid>
+		<timestamp>1049517781</timestamp>
+		<class>custom</class>
+		<classloc/>
+		<baseclass>custom</baseclass>
+		<objname>actividad</objname>
+		<parent/>
+		<properties>Height = 17
+Width = 60
+id =  
+numcont =  
+cerror =  
+tipo =  
+fecha = {}
+fechafin = {}
+obs =  
+numuser =  
+numusergen =  
+numorden =  
+numcotiza =  
+refer =  
+ordenpost =  
+statuscot = 0
+nerror = 0
+folioser =  
+Name = "actividad"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+*
+* Init
+*
+* Abre la base de datos con otro alias
+
+If Select('_Crm') == 0
+	Use Crm Alias _Crm Order Id In 0 Again
+EndIf
+
+ENDPROC
+PROCEDURE agregar
+*
+* Agregar
+*
+* Agrega una nueva actividad
+*
+
+With This
+	Select _Crm
+	If Empty(.Id)
+		* Si esta vacio el ID, es una nueva actividad
+		* Asignarle el siguiente folio
+		Go Bott
+		.Id = Padl(Allt(SigDoc(ID)),10)
+
+		* Agrega la nueva actividad
+		Append Blank
+		Replace	ID			With	.Id
+	EndIf
+	
+	* Actualizar la informacion
+	Replace	NUMCONT		With	.NumCont,;
+			TIPO		With	.Tipo,;
+			FECHA		With	.Fecha,;
+			FECHAFIN	With	.FechaFin,;
+			OBS			With	.Obs,;
+			NUMUSER		With	.NumUser,;
+			NUMUSERGEN	With	.NumUserGen,;
+			NUMORDEN	With	.NumOrden,;
+			NUMCOTIZA	With	.NumCotiza,;
+			ACTIVIDAD	With	.Actividad,;
+			REFER		With	.Refer,;
+			ORDENPOST	With	.OrdenPost,;
+			STATUSCOT	With	.StatusCot,;
+			FOLIOSER	With	.FolioSer
+	
+	* Abrir las bases de datos con otro alias
+	Use
+	Use Crm Alias _Crm Order Id In 0 Again
+
+EndWith
+
+ENDPROC
+PROCEDURE modificar
+*
+* Modificar
+*
+* Modifica una actividad que ya existe
+*
+
+With This
+	Select _Crm
+	=Seek(.Id)
+	
+	* Actualizar la informacion
+	Replace	NUMCONT		With	.NumCont,;
+			TIPO		With	.Tipo,;
+			FECHA		With	.Fecha,;
+			FECHAFIN	With	.FechaFin,;
+			OBS			With	.Obs,;
+			NUMUSER		With	.NumUser,;
+			NUMUSERGEN	With	.NumUserGen,;
+			NUMORDEN	With	.NumOrden,;
+			NUMCOTIZA	With	.NumCotiza,;
+			ACTIVIDAD	With	.Actividad,;
+			REFER		With	.Refer,;
+			ORDENPOST	With	.OrdenPost,;
+			STATUSCOT	With	.StatusCot,;
+			FOLIOSER	With	.FolioSer
+	
+	* Abrir las bases de datos con otro alias
+	Use
+	Use Crm Alias _Crm Order Id In 0 Again
+
+EndWith
+
+ENDPROC
+PROCEDURE modpost
+*
+* ModPost
+*
+* Actualiza el campo OrdenPost de una actividad relacionada con una orden de servicio
+*
+With This
+	
+	* La orden se genero despues de grabar una actividad
+	* Grabar el folio de la orden en la actividad
+	Select _Crm
+	If Not Empty(.Id)
+		If Seek(.Id)
+			Replace	ORDENPOST	With	.OrdenPost
+		EndIf
+	EndIf
+	
+	* Abrir las bases de datos con otro alias
+	Use
+	Use Crm Alias _Crm Order Id In 0 Again
+	
+EndWith
+
+ENDPROC
+PROCEDURE validagregar
+*
+* ValidAgregar
+*
+* Validar la actividad a agregar
+
+With This
+	* No omitir la fecha
+	If Empty(.Fecha)
+		.cError = 'No se puede omitir la fecha y hora inicial'
+		.nError = 1
+		Return .F.
+	EndIf
+	
+	* No omitir la fecha
+	If Empty(.FechaFin)
+		.cError = 'No se puede omitir la hora final'
+		.nError = 2
+		Return .F.
+	EndIf
+	
+	* Fecha Fin debe ser mayor o igual a fecha
+	If .Fecha&gt;.FechaFin
+		.cError = 'Fecha inicial debe ser menor o igual a fecha final'
+		.nError = 1
+		Return .f.
+	Endif
+		
+	* No omitir el tipo de actividad
+	If Empty(.Tipo)
+		.cError = 'No se puede omitir el tipo de actividad'
+		.nError = 3
+		Return .F.
+	EndIf
+	
+	* No omitir la descripcion de la actividad
+	If Empty(.Obs)
+		.cError = 'No se puede omitir la descripción'
+		.nError = 4
+		Return .F.
+	EndIf
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>Class</reserved1>
+		<reserved2>1</reserved2>
+		<reserved3>id
+numcont
+cerror
+tipo
+fecha
+fechafin
+obs
+numuser
+numusergen
+numorden
+numcotiza
+actividad
+refer
+ordenpost
+statuscot
+nerror
+folioser
+*agregar 
+*validagregar 
+*modificar 
+*modpost 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6>Pixels</reserved6>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname>actividad</objname>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

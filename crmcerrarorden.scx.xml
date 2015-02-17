@@ -1,0 +1,525 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90Z11HH</uniqueid>
+		<timestamp>863928978</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90Z11IK</uniqueid>
+		<timestamp>1052463626</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 414
+Width = 525
+DoCreate = .T.
+Caption = "Cerrar Orden de Servicio"
+KeyPreview = .T.
+cnumuser =  
+Name = "Formamsl1"
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+LParameter cNumOrden
+
+If Not OpenDbf('Contactos','NUMCONT') Or;
+	Not OpenDbf('Ordenes','NUMORDEN')
+	Return .F.
+EndIf
+
+With ThisForm
+	* Cargar la lista de tipos de ordenes
+	.CargarTipos()
+
+	* Si se manda llamar desde consulta de ordenes, mostrar la orden seleccionada
+	If PCount()==1
+		.NumOrden.Value = cNumOrden
+		KeyBoard '{ENTER}'		
+	Endif
+
+EndWith	
+
+ENDPROC
+PROCEDURE cargarinfoorden
+*
+* CargarInfoOrden
+*
+* Carga la informacion de la orden
+
+	ThisForm.Save.Enabled = .f.
+
+	cNumOrden = ThisForm.NumOrden.Value
+	If Seek(cNumOrden, 'Ordenes')
+		=Seek(Ordenes.NUMCONT,'Contactos')
+		
+		cSql = 'select * from crm where numorden=val1'
+		
+		ThisForm.InfoOrden.Value = ;
+			Allt(MexDate2(Ordenes.CREADA)) + ' / ' + Allt(Contactos.NOMCONT)+ ' / '+;
+			Allt(Contactos.EMPRESA)+Chr(13)+Chr(13)+;
+			'Problema:'+Chr(13)+;
+			'================================='+Chr(13)+;
+			StrTran(StrTran(Ordenes.PROBLEMA,Chr(13),''),Chr(10),'') + Chr(13)+Chr(13)+;
+			'Servicios:'+Chr(13)+;
+			'================================='+Chr(13)+;			
+			ThisForm.ObtenerServicios(cNumorden)
+			
+		ThisForm.Save.Enabled = .t.
+		ThisForm.Tipo.SetFocus()
+	Else
+		If not Empty(cNumOrden)
+			Alerta('Folio de Orden no existe')
+			.NumOrden.SetFocus()
+		Endif
+	Endif
+	
+
+ENDPROC
+PROCEDURE cargartipos
+*
+* CargarTipos
+*
+* Carga los tipos de ordenes
+*
+With ThisForm
+	Local i,cTipos,cTipo
+	cTipos = GetMsl('CrmTiposDeOrdenes')
+	If Empty(cTipos)
+		ThisForm.Tipo.Enabled = .f.
+		Return
+	Endif
+	i = 0
+	Do While .t.	
+		i=i+1
+		cTipo = SubLin(cTipos,i)
+		If Empty(cTipo)
+			Exit
+		Endif
+		ThisForm.Tipo.AddItem(cTipo)
+	Enddo
+EndWith
+
+ENDPROC
+PROCEDURE obtenerservicios
+*
+* ObtenerServicios
+*
+* Te regresa todos los servicios de la orden
+lParameter cNumOrden
+
+	If not SqlMsl('Temp','Select Crm.ID,Crm.FECHA,Crm.FECHAFIN,Contactos.NOMCONT,Usuarios.NOMUSER,Crm.TIPO,Crm.OBS,Crm.NUMORDEN ' +;
+		'From Crm '+;
+		' Left Join Contactos On Crm.NUMCONT == Contactos.NUMCONT ' +;
+		' Left Join Usuarios On Crm.NUMUSER == Usuarios.NUMUSER ' +;
+		'Where Crm.NUMORDEN==m.Val1 and Crm.ACTIVIDAD==.t. ',;
+		cNumOrden)
+	    Return
+	Endif
+	
+	* Ordenar los servicios x fecha
+	cRetVal = ''
+	Select Temp
+	Index On FECHA Tag Fecha
+	Set Order To Fecha
+	Scan
+		If FECHA==FECHAFIN
+			Loop
+		Endif
+		cRetVal = cRetVal + ;
+			Allt(MexDate2(SToD(DToS(Temp.FECHA))))+' '+;
+			SubStr(TToC(Temp.FECHA),12,5)+'-'+SubStr(TToC(Temp.FECHAFIN),12,5)+Chr(13)+;
+			Proper(Allt(Temp.NOMCONT))+' / '+Proper(Allt(Temp.NOMUSER))+' / '+Allt(Temp.TIPO)+Chr(13)+;
+			Chr(13)+;
+			StrTran(StrTran(Temp.OBS,Chr(13),''),Chr(10),'') + Chr(13)+Chr(13)+;
+			'--------------------'+Chr(13)
+
+	EndScan
+
+	DelAlias('Temp')
+
+Return cRetVal
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>cnumuser
+*cargartipos 
+*cargarinfoorden 
+*obtenerservicios 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90Z11HH</uniqueid>
+		<timestamp>1015699766</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda7</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Orden"
+Height = 16
+Left = 10
+Top = 15
+Width = 32
+TabIndex = 1
+Name = "Leyenda7"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90Z11M3</uniqueid>
+		<timestamp>1015699766</timestamp>
+		<class>closebutton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>cerrar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 370
+Left = 425
+Height = 25
+Width = 85
+Caption = "Cancelar"
+TabIndex = 9
+Name = "cerrar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90Z11M4</uniqueid>
+		<timestamp>1015700841</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>save</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 370
+Left = 340
+Height = 25
+Width = 85
+Caption = "\&lt;Cerrar Orden"
+TabIndex = 8
+Name = "save"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Cerrar la orden
+*
+If Empty(ThisForm.Tipo.Value)
+	Alerta('Debe indicar tipo')
+	Return
+Endif
+If not GetNY('¿Seguro que desea cerrar la orden de servicio?')
+	Return
+Endif
+Select Ordenes
+Replace ;
+	TIPO	with ThisForm.Tipo.Value,;
+	TERMINADA with datetime(),;
+	AVANCE with 100
+
+Wait Window 'Orden ha sido cerrada' NoWait
+ThisForm.Release()
+
+	
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90Z11IN</uniqueid>
+		<timestamp>1015699766</timestamp>
+		<class>orden</class>
+		<classloc>orden.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oOrden</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 10
+Left = 125
+Height = 20
+Width = 30
+Name = "oOrden"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1VQ0QRSTX</uniqueid>
+		<timestamp>1015699766</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>numorden</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 20
+Left = 45
+TabIndex = 2
+Top = 10
+Width = 69
+Name = "numorden"
+</properties>
+		<protected/>
+		<methods>PROCEDURE LostFocus
+*
+* NumOrden.Valid
+*
+*
+This.Value = Padl(Allt(This.Value),10)
+ThisForm.CargarInfoOrden()
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2WP14Z7MT</uniqueid>
+		<timestamp>1015699766</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>InfoOrden</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 325
+Left = 10
+ReadOnly = .T.
+TabIndex = 3
+Top = 35
+Width = 505
+Name = "InfoOrden"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2WP14Z7MU</uniqueid>
+		<timestamp>1015699766</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda4</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Tipo de Orden"
+Height = 16
+Left = 10
+Top = 375
+Width = 70
+TabIndex = 6
+Name = "Leyenda4"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2WP14Z7MV</uniqueid>
+		<timestamp>1015699766</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>Tipo</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 21
+Left = 90
+Style = 2
+TabIndex = 7
+Top = 370
+Width = 165
+Name = "Tipo"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

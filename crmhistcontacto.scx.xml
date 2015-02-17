@@ -1,0 +1,937 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TD8JM</uniqueid>
+		<timestamp>863399236</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TD8JN</uniqueid>
+		<timestamp>960190289</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 450
+Width = 531
+DoCreate = .T.
+Caption = "Historial del Contacto"
+Name = "Formamsl1"
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+LParameter cNumCont
+If Not OpenDbf('Crm','ID') Or;
+	Not OpenDbf('Contactos','NUMCONT') Or;
+	Not OpenDbf('Usuarios','NUMUSER') Or;
+	Not OpenDbf('Cia')
+	Return .F.
+EndIf
+
+Set Hour To 24
+
+* Crear el temporal
+Create Cursor Temp(;
+	ID			C(10),;
+	NUMCONT		C(6),;
+	NOMCONT		C(50),;
+	FECHA		D(8),;
+	INIFIN		C(11),;
+	NUMORDEN	C(10),;
+	TIPO		C(20),;
+	OBS			M(4),;
+	NOMUSER		C(30))
+
+With ThisForm
+	.Grid1.GridLineColor = .BackColor
+
+	* Almacena en una propiedad el numero de contacto
+	.cNumCont = cNumCont
+
+	* Obtener la informacion del contacto
+	If Seek(.cNumCont,'Contactos')
+		.LeeContacto.Clave.Value = cNumCont
+		.LeeContacto.Nombre.Value = Contactos.NOMCONT
+		.InfoContacto.Value = Allt(Contactos.EMPRESA)+Chr(13)+Allt(Contactos.TELEFONO)+Chr(13)+;
+			Allt(Contactos.MAIL)
+	EndIf
+
+	* Manda llamar el metodo para cargar el historial del contacto
+	.CargarHistorial()
+	
+EndWith
+
+ENDPROC
+PROCEDURE Unload
+* Borra el temporal
+DelAlias('Temp')
+DoDefault()
+
+ENDPROC
+PROCEDURE cargarhistorial
+With ThisForm
+
+	* Borra el temporal
+	Select Temp
+	Zap
+	
+	.Grid1.RecordSource = ''
+
+	* Busca en CRM las actividades del contacto
+	If not SqlMsl('Temp','Select Crm.ID,Crm.NUMCONT,Contactos.NOMCONT,Crm.FECHA, '+;
+		'SubStr(TToC(Crm.FECHA),12,5)+"-"+SubStr(TToC(Crm.FECHAFIN),12,5) As INIFIN, '+;
+		'Crm.NUMORDEN As NumOrden,Crm.TIPO,Crm.OBS,Usuarios.NOMUSER ' +;
+		'From Crm '+;
+		'Left Join Contactos On Crm.NUMCONT == Contactos.NUMCONT '+;
+		'Left Join Usuarios On Crm.NUMUSER == Usuarios.NUMUSER '+;
+		'Where '+;
+		'Crm.ACTIVIDAD = .T. ' + ' and '+;
+		'Crm.NUMCONT == m.Val1 ',;
+		.cNumCont)
+Return
+	Endif
+	
+	Index On DTOS(FECHA)+INIFIN Tag FecIni
+	Set Order To FecIni
+			
+	* Muestra los datos de TEMP
+	.LockScreen = .T.
+	With ThisForm.Grid1
+		.RecordSourceType = 1
+		.RecordSource = 'Temp'
+
+		.Column1.ControlSource = 'MexDate3(Temp.FECHA)'
+		.Column2.ControlSource = 'Temp.INIFIN'
+		.Column3.ControlSource = 'Temp.TIPO'
+		.Column4.ControlSource = 'SubStr(Temp.OBS,1,100)'
+		.Column5.ControlSource = 'Proper(Allt(Temp.NOMUSER))'
+		
+		Go Bott
+		.SetFocus
+
+	EndWith
+	.LockScreen = .F.
+
+	* Muestra mensaje si no se encontro informacion
+	If Reccount('Temp')==0
+		Alerta('No se encontró información')
+		Return 		
+	Endif
+
+EndWith
+
+ENDPROC
+PROCEDURE mostrardetalle
+* Muestra el detalle del historial
+With ThisForm
+	.Detalle.Value = MexDate2(Temp.FECHA)+' '+Temp.INIFIN+IIF(Not Empty(Temp.NUMORDEN),' OS# '+Allt(Temp.NUMORDEN),'')+Chr(13)+;
+		Proper(Allt(Temp.NOMCONT))+Chr(13)+Proper(Allt(Temp.NOMUSER))+Chr(13)+;
+		+Allt(Temp.TIPO)+Chr(13)+'--------------------'+Chr(13)+Allt(Temp.OBS)
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>cnumcont
+*cargarhistorial 
+*mostrardetalle 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10THN4A</uniqueid>
+		<timestamp>928221849</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>excel</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 66
+Left = 463
+Height = 25
+Width = 25
+Picture = ..\..\sistemas\msllib60\x.bmp
+Caption = ""
+TabIndex = 16
+Name = "excel"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+With Thisform
+	* Mada a Excel la consulta	
+	cNomcia = Allt(Cia.NOMCIA)
+	cTitulo = .Caption
+	cColumnas = 'Folio^# Contacto^Contacto^Fecha^Inicio-Fin^#Orden^Tipo^Descripción^Usuario'
+	cMascaras = 'C^C^D^C^C^C^C^C'
+	OpenExcel(cNomCia,cTitulo,cColumnas,cMascaras)
+
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10THN4B</uniqueid>
+		<timestamp>863931403</timestamp>
+		<class>statictext</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>Infocontacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 55
+Left = 13
+Top = 36
+Width = 412
+Name = "Infocontacto"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TD8JM</uniqueid>
+		<timestamp>960189641</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>copiar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 66
+Left = 432
+Height = 25
+Width = 25
+Picture = ..\..\sistemas\msllib60\copiar.bmp
+Caption = ""
+Name = "copiar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+* Copia la informacion al ClipBoard
+With Thisform
+	m.Texto = ''
+	Select Temp
+	Scan
+		m.Texto = m.Texto +MexDate2(Temp.FECHA)+' '+Temp.INIFIN+IIF(Not Empty(Temp.NUMORDEN),' OS# '+Allt(Temp.NUMORDEN),'')+Chr(13)+;
+			Proper(Allt(Temp.NOMCONT))+Chr(13)+Proper(Allt(Temp.NOMUSER))+Chr(13)+;
+			+Allt(Temp.TIPO)+Chr(13)+'--------------------'+Chr(13)+Allt(Temp.OBS)+Chr(13)+Chr(13)
+	EndScan		
+	
+	_ClipText = m.Texto
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10THN4D</uniqueid>
+		<timestamp>864113222</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>imprimir</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 66
+Left = 494
+Height = 25
+Width = 25
+Picture = ..\..\sistemas\msllib60\printer.bmp
+Caption = ""
+Name = "imprimir"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+Select Temp
+Set Relation To NUMCONT Into Contactos
+
+* Imprimir el historial del contacto
+=SendRep('HistCont')
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME19</uniqueid>
+		<timestamp>960189421</timestamp>
+		<class>grid</class>
+		<classloc/>
+		<baseclass>grid</baseclass>
+		<objname>Grid1</objname>
+		<parent>Formamsl1</parent>
+		<properties>ColumnCount = 5
+FontSize = 8
+DeleteMark = .F.
+GridLines = 2
+Height = 155
+Left = 12
+Panel = 1
+ReadOnly = .T.
+RecordMark = .F.
+RowHeight = 17
+ScrollBars = 2
+Top = 96
+Width = 508
+Name = "Grid1"
+Column1.FontSize = 8
+Column1.Width = 68
+Column1.ReadOnly = .T.
+Column1.Name = "Column1"
+Column2.FontSize = 8
+Column2.Width = 73
+Column2.ReadOnly = .T.
+Column2.Name = "Column2"
+Column3.FontSize = 8
+Column3.Width = 94
+Column3.ReadOnly = .T.
+Column3.Name = "Column3"
+Column4.FontSize = 8
+Column4.Width = 157
+Column4.ReadOnly = .T.
+Column4.Name = "Column4"
+Column5.FontSize = 8
+Column5.Width = 88
+Column5.ReadOnly = .T.
+Column5.Name = "Column5"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME1A</uniqueid>
+		<timestamp>863399655</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column1</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Fecha"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME1B</uniqueid>
+		<timestamp>863933070</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column1</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+* FECHA
+* Manda llamar el metodo para mostrar el detalle de la actividad
+ThisForm.MostrarDetalle()
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME1C</uniqueid>
+		<timestamp>863399655</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column2</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Ini-Fin"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME1D</uniqueid>
+		<timestamp>863933097</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column2</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+* INIFIN
+* Manda llamar el metodo para mostrar el detalle de la actividad
+ThisForm.MostrarDetalle()
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME1E</uniqueid>
+		<timestamp>863400045</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column3</parent>
+		<properties>FontSize = 8
+Caption = "Tipo"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME1F</uniqueid>
+		<timestamp>863933097</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column3</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+* TIPO
+* Manda llamar el metodo para mostrar el detalle de la actividad
+ThisForm.MostrarDetalle()
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME1G</uniqueid>
+		<timestamp>863400045</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column4</parent>
+		<properties>FontSize = 8
+Caption = "Descripción"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME1H</uniqueid>
+		<timestamp>863933097</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column4</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+* DESCRIPCION
+* Manda llamar el metodo para mostrar el detalle de la actividad
+ThisForm.MostrarDetalle()
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME1I</uniqueid>
+		<timestamp>863400045</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column5</parent>
+		<properties>FontSize = 8
+Caption = "Usuario"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TME1J</uniqueid>
+		<timestamp>863933097</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column5</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+* USUARIO
+* Manda llamar el metodo para mostrar el detalle de la actividad
+ThisForm.MostrarDetalle()
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TU3NU</uniqueid>
+		<timestamp>960189421</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Detalle"
+Height = 16
+Left = 12
+Top = 258
+Width = 34
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TWT3G</uniqueid>
+		<timestamp>960190289</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>detalle</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 160
+Left = 12
+ReadOnly = .T.
+TabIndex = 36
+Top = 277
+Width = 508
+Name = "detalle"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10TZFII</uniqueid>
+		<timestamp>960189508</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>copiardet</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 252
+Left = 494
+Height = 25
+Width = 25
+Picture = ..\..\sistemas\msllib60\copiar.bmp
+Caption = ""
+Name = "copiardet"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+* Copia el detalle al ClipBoard
+_ClipText = Allt(ThisForm.Detalle.Value)
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10U4NI1</uniqueid>
+		<timestamp>863931403</timestamp>
+		<class>leernombre</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>LeeContacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 13
+Left = 14
+Width = 279
+Height = 25
+Enabled = .F.
+TabIndex = 5
+calias = Contactos
+ccampoclave = Contactos.NUMCONT
+ccamponombre = Contactos.NOMCONT
+cformabusqueda = BuscaCont
+nanchoclave = 6
+ctagclave = NUMCONT
+ctagnombre = NOMCONT
+Name = "LeeContacto"
+Container1.Top = 0
+Container1.Left = 50
+Container1.Width = 227
+Container1.Height = 21
+Container1.Name = "Container1"
+List1.Name = "List1"
+Nombre.Height = 17
+Nombre.Left = 52
+Nombre.Top = 2
+Nombre.Width = 209
+Nombre.Name = "Nombre"
+Leyenda1.Top = 2
+Leyenda1.Name = "Leyenda1"
+Clave.Left = 200
+Clave.Top = 4
+Clave.Name = "Clave"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

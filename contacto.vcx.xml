@@ -1,0 +1,191 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Class</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20L1QI1</uniqueid>
+		<timestamp>863652098</timestamp>
+		<class>custom</class>
+		<classloc/>
+		<baseclass>custom</baseclass>
+		<objname>contacto</objname>
+		<parent/>
+		<properties>Height = 18
+Width = 57
+numcont =  
+nomcont =  
+telefono =  
+empresa =  
+mail =  
+numcli =  
+cerror =  
+nerror = 0
+Name = "contacto"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+*
+* Init
+*
+* Abrir la base de datos de contactos con otro alias
+*
+Use Contactos Alias _Contactos Order NumCont In 0 Again
+
+ENDPROC
+PROCEDURE agregar
+*
+* Agregar
+*
+* Agrega un contacto nuevo
+* En caso de que NumCont sea vacio se asignar numero y se agregara registro
+* En caso de que mande NumCont, solo se actualizara la informacion
+*
+
+With This
+
+	Select _Contactos
+	If Empty(.NumCont)
+		* Si esta vacio el ID del contacto, creamos un nuevo contacto
+		* y actualizamos su llave primaria
+		Go Bott
+		.NumCont = Padl(Allt(SigDoc(NUMCONT)),6)
+		Append Blank
+		Replace	NUMCONT		With	.NumCont
+	Else
+		* Se esta mandando el numero de contacto
+		* Y en la validacion ya se verifico que existe
+		* Solo posicionarme en el registro correcto
+		=Seek(.NumCont)
+	EndIf
+
+	* Actualiza la informacion del contacto
+	Replace	NOMCONT		With	.NomCont,;
+			EMPRESA		With	.Empresa,;
+			TELEFONO	With	.Telefono,;
+			MAIL		With	.Mail,;
+			NUMCLI		With	.NumCli
+
+	* Cerrar tabla para asegurar actualizacion y voler a abrirla
+	Use
+	Use Contactos Alias _Contactos Order NumCont In 0 Again
+	
+EndWith
+
+ENDPROC
+PROCEDURE validagregar
+*
+* ValidAgregar
+*
+* Validar que no se omitan los datos principales del contacto
+*
+* Si manda numero de contacto, validar que exista en la tabla de contactos
+
+With This
+	
+	* Validar que exista el numero de contacto
+	If Not Empty(.NumCont)
+		If Not Seek(.NumCont,'_Contactos')
+			.cError = 'No existe este numero de contacto'
+			.nError = 1
+			Return .F.
+		EndIf
+	EndIf
+		
+	* No omitir el contacto
+	If Empty(.NomCont)
+		.cError = 'No se puede omitir el contacto'
+		.nError = 1
+		Return .F.
+	EndIf
+
+	* No omitir el nombre de la empresa
+	If Empty(.Empresa)
+		.cError = 'No se puede omitir la empresa'
+		.nError = 2
+		Return .F.
+	EndIf
+
+	* No omitir el telefono de la empresa
+	If Empty(.Telefono)
+		.cError = 'No se puede omitir el telefono'
+		.nError = 3
+		Return .F.
+	EndIf
+
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>Class</reserved1>
+		<reserved2>1</reserved2>
+		<reserved3>numcont
+nomcont
+telefono
+empresa
+mail
+numcli
+cerror
+nerror
+*agregar 
+*validagregar 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6>Pixels</reserved6>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname>contacto</objname>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

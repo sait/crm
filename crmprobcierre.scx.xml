@@ -1,0 +1,359 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G11EF1X</uniqueid>
+		<timestamp>1177783136</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Left = 1
+Top = 220
+Width = 520
+Height = 200
+Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G11EF1Y</uniqueid>
+		<timestamp>1178358365</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 271
+Width = 290
+DoCreate = .T.
+Caption = "Oportunidades - Probab. Cierre"
+Name = "Formamsl1"
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+*
+* Init
+*
+
+* Obtener los tipos de probabilidad de cierre desde el Config.msl
+cTipos = GetMsl('CrmProbCierre')
+cTipoProb = ''
+
+* Crear el temporal donde se van a almacenar los tipos
+Create Cursor TipoProb(TIPO C(15))
+
+* Agregarlos al temporal
+i = 1
+Do While .T.
+	cTipoProb = SubLin(cTipos,i)
+	If Empty(cTipoProb)
+		Exit
+	Endif
+	Insert Into TipoProb Values (cTipoProb)
+	i=i+1
+EndDo
+
+* Agregar 10 registros en blanco
+For i=1 to 10
+	Append Blank
+Next
+Go Top
+
+* Asignar el temporal al grid
+ThisForm.Grid1.RecordSource = 'TipoProb'
+
+ENDPROC
+PROCEDURE Unload
+*
+* UnLoad
+*
+* Borrar el temporal
+DelAlias('TipoProb')
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G11EF1Z</uniqueid>
+		<timestamp>1178358365</timestamp>
+		<class>grid</class>
+		<classloc/>
+		<baseclass>grid</baseclass>
+		<objname>Grid1</objname>
+		<parent>Formamsl1</parent>
+		<properties>ColumnCount = 1
+FontSize = 8
+AllowAddNew = .T.
+DeleteMark = .F.
+GridLines = 2
+HeaderHeight = 0
+Height = 201
+Left = 24
+RecordMark = .F.
+RowHeight = 17
+ScrollBars = 2
+TabIndex = 1
+Top = 15
+Width = 242
+Name = "Grid1"
+Column1.FontSize = 8
+Column1.Width = 220
+Column1.Name = "Column1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G11EF20</uniqueid>
+		<timestamp>1177783136</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column1</parent>
+		<properties>FontSize = 8
+Caption = "Header1"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G11EF21</uniqueid>
+		<timestamp>1178358365</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column1</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE LostFocus
+*
+* TipoProb.TIPO
+*
+* Bajarme al siguiente renglon al presionar [Enter]
+*
+If LastKey() == 13
+	KeyBoard'{DNARROW}'
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G11EF22</uniqueid>
+		<timestamp>1178358365</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>grabar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 231
+Left = 62
+Height = 25
+Width = 60
+Caption = "\&lt;Grabar"
+TabIndex = 2
+Name = "grabar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Grabar
+*
+* Grabar en el Config.msl los tipos de probabilidad de cierre
+*
+With ThisForm
+	
+	* Recorrer el temporal
+	cTipoProb = ''
+	Select TipoProb
+	Scan
+		If Not Empty(TIPO)
+			cTipoProb = cTipoProb + IIF(Not Empty(cTipoProb),'^','') + Allt(TIPO)
+		EndIf
+	EndScan
+	
+	* Grabar en el Config.msl la informacion
+	PutMsl('CrmProbCierre', cTipoProb)
+	
+	* Cerrar la ventana
+	.Release
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G11EF23</uniqueid>
+		<timestamp>1178358365</timestamp>
+		<class>closebutton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>cerrar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 231
+Left = 167
+Height = 25
+Width = 60
+TabIndex = 3
+Name = "cerrar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

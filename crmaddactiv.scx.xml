@@ -1,0 +1,1450 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LDEPG</uniqueid>
+		<timestamp>863391561</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LDEPH</uniqueid>
+		<timestamp>1049388047</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 267
+Width = 607
+DoCreate = .T.
+Caption = "Agregar Actividad"
+KeyPreview = .T.
+cnumcotiza =  
+nstatuscot = 0
+crefer =  
+cnumuser =  
+cnumorden =  
+cordenpost =  
+Name = "Formamsl1"
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+LParameter nModo,nRec
+If Not OpenDbf('Contactos','NUMCONT') Or;
+	Not OpenDbf('Crm','ID') Or;
+	Not OpenDbf('Clientes','NUMCLI') Or;
+	Not OpenDbf('Ordenes','NUMORDEN') Or;
+	Not OpenDbf('Usuarios','NUMUSER')
+	Return .F.
+EndIf
+
+With ThisForm
+	* Si no recibe ningun parámetro, lo manda como 1
+	If PCount()==0
+		nModo=1
+	EndIf
+	
+	* Almacena el modo en que se manda llamar la ventana
+	.nModo = nModo
+
+	* Manda llamar el metodo para cargar los tipos de actividades
+	.TiposDeActividades()
+	
+	* Oculta la leyenda de SUSPENDIDO
+	.LabelSuspendido.Visible = .F.
+	
+	Select Crm
+	If (.nModo==2)
+		If (nRec&lt;=0 or nRec &gt; Reccount())
+			Alerta('Registro no válido')
+			Return .f.
+		EndIf
+		GoTo nRec
+	EndIf
+	
+	Do Case
+	Case .nModo == 1
+		.Caption = 'Agregar Actividad'
+		.Id.Visible = .F.
+		.Usuario.Enabled = .F.
+		.Usuario.Value = m.NomUser
+		.cNumUser = m.NumUser
+		.LeeFecha.SetValue(Date())
+		.HoraIni.Value = Left(Time(),5)
+		.HoraFin.Value = Time()
+		.LabelAgregar.Visible = .T.
+		.Agregar.Visible = .T.
+		.Timer1.Enabled = .T.
+		.lContar = .T.
+		.LabelOrden.Visible = .F.
+		.NumOrden.Visible = .F.
+		
+	Case .nModo == 2
+		.Caption = 'Modificar Actividad'
+		.Id.Visible = .T.
+		.Usuario.Enabled = .T.
+		.Agregar.Visible = .F.
+		.CargarInfo()
+		.LabelAgregar.Visible = .F.
+		.Agregar.Visible = .F.
+		.Timer1.Enabled = .F.
+		.Obs.Height = 115
+		.LabelOrden.Visible = .T.
+		.NumOrden.Visible = .T.
+		
+	Endcase	
+
+	.InfoCont.SetFocus()
+	
+EndWith	
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+With ThisForm
+	* Procesar si presiona [F8]
+	If nKeyCode=-7
+		Keyboard '{ALT-P}'
+		NoDefault
+	Endif	
+
+	* Presion ESC
+	If nKeyCode == 27
+	
+		* No hacer nada, estoy agregando actividad
+		If .nModo == 1
+			NoDefault
+			Return
+		Endif
+	
+		* Estoy modificando
+		If .nModo == 2
+		
+			If Empty(.Obs.Tag)
+				* No ha entrado a la obvservacion
+				DoDefault(nKeyCode, nShiftAltCtrl)
+				Return
+			Else
+				* Ya paso por la observacion
+				NoDefault
+				Return
+			Endif
+
+		Endif
+	EndIf
+
+EndWith
+ENDPROC
+PROCEDURE cargarinfo
+* Metodo para cargar la informacion de la actividad
+With ThisForm
+	
+	.Id.Value = Crm.ID
+	
+	* Almacenar el numero de cotizacion, el status, la referencia,
+	* el numero de orden y orden posterior
+	.cNumCotiza = Crm.NUMCOTIZA
+	.nStatusCot = Crm.STATUSCOT
+	.cRefer = Crm.REFER
+	.cNumOrden = Crm.NUMORDEN
+	.cOrdenPost = Crm.ORDENPOST
+	
+	* Mostrar el nombre del usuario
+	.cNumUser = Crm.NUMUSER
+	If Seek(.cNumUser,'Usuarios')
+		.Usuario.Value = Usuarios.NOMUSER
+	EndIf
+	
+	* Mostrar la fecha, hora de inicio y fin de la actividad
+	.LeeFecha.SetValue(SToD(DToS(Crm.FECHA)))
+	.HoraIni.Value = SubStr(TToC(Crm.FECHA),12,5)
+	.HoraFin.Value = SubStr(TToC(Crm.FECHAFIN),12,5)
+	.HoraFin.InputMask = '99:99'
+	
+	* Obtener la informacion del contacto
+	cNumCont = Crm.NUMCONT
+	If Seek(cNumCont,'Contactos')
+		.InfoCont.LeeContacto.Clave.Value = cNumCont
+		.InfoCont.LeeContacto.Nombre.Value = Contactos.NOMCONT
+		.InfoCont.LeeContacto.LostFocus()
+	EndIf
+	
+	* Mostrar el tipo de actividad
+	.Tipo.Nombre.Value = Crm.TIPO
+	
+	* Mostrar las observaciones
+	.Obs.Value = Crm.OBS
+	
+	* Mostrar el numero de orden
+	.NumOrden.Value = .cNumOrden
+	
+EndWith
+
+ENDPROC
+PROCEDURE enviarfocus
+With ThisForm
+	* Manda el Focus al contacto
+	If .oContacto.nError = 1
+		.InfoCont.LeeContacto.SetFocus
+	EndIf	
+	
+	* Manda el focus a la empresa del contacto
+	If .oContacto.nError = 2
+		.InfoCont.Empresa.SetFocus
+	EndIf	
+	
+	* Manda el focus al telefono del contacto
+	If .oContacto.nError = 3
+		.InfoCont.Telefono.SetFocus
+	EndIf	
+	
+	* Manda el focus a la fecha
+	If .oActividad.nError = 1
+		.LeeFecha.SetFocus
+	EndIf
+	
+	* Manda el focus a la fecha
+	If .oActividad.nError = 2
+		.HoraFin.SetFocus
+	EndIf
+	
+	* Manda el focus al tipo de actividad
+	If .oActividad.nError = 3
+		.Tipo.SetFocus
+	EndIf
+	
+	* Manda el focus a la descripcion de la actividad
+	If .oActividad.nError = 4
+		.Obs.SetFocus
+	EndIf
+	
+EndWith
+
+ENDPROC
+PROCEDURE tiposdeactividades
+* Cargar los tipos de actividades
+With ThisForm
+	Local i,cTipos,cNomActiv
+
+	* Obtener los tipos de actividades de CONFIG.MSL
+	cTipos = GetMsl('CrmTiposDeActividad')
+	cNomActiv = ''
+
+	Create Cursor CrmActiv(;
+		NUMACTIV C(5),;
+		NOMACTIV C(20))
+		
+	Index on NUMACTIV Tag NumActiv
+	Index on UPPER(NOMACTIV) Tag NomActiv
+	
+	* Crear temporal con los tipos
+	i = 1
+	Do While .t.
+		cNomActiv = SubLin(cTipos,i)
+		If Empty(cNomActiv)
+			Exit
+		Endif
+		Insert Into CrmActiv Values ( Str(i,5,0), cNomActiv)
+		i=i+1
+	Enddo
+
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>nmodo
+lcontar
+cnumcotiza
+nstatuscot
+crefer
+cnumuser
+cnumorden
+cordenpost
+*cargarinfo 
+*enviarfocus 
+*tiposdeactividades 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LDEPI</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Usuario"
+Height = 16
+Left = 20
+Top = 38
+Width = 39
+TabIndex = 4
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LDEPJ</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>usuario</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+RowSourceType = 6
+RowSource = "Usuarios.NOMUSER"
+DisplayValue = 1
+Height = 20
+Left = 65
+Style = 2
+TabIndex = 5
+Top = 36
+Width = 230
+Name = "usuario"
+</properties>
+		<protected/>
+		<methods>PROCEDURE InteractiveChange
+* Almacena en una propiedad el numero de usuario
+ThisForm.cNumUser = Usuarios.NUMUSER
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LDEPK</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Fecha"
+Height = 16
+Left = 27
+Top = 61
+Width = 32
+TabIndex = 6
+Name = "Leyenda2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1P30LJI2C</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>leernombre</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>tipo</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 15
+Left = 316
+Width = 203
+Height = 21
+TabIndex = 11
+ZOrderSet = 4
+calias = CrmActiv
+ccampoclave = CrmActiv.NUMACTIV
+ccamponombre = CrmActiv.NOMACTIV
+cformabusqueda = 
+ctagclave = NumActiv
+ctagnombre = NomActiv
+nanchoclave = 5
+lverclave = .T.
+Name = "tipo"
+Container1.Name = "Container1"
+List1.Name = "List1"
+Nombre.Name = "Nombre"
+Leyenda1.Caption = "Acti\&lt;vidad"
+Leyenda1.Name = "Leyenda1"
+Clave.Name = "Clave"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LDEPL</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>leefecha</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>Leefecha</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 58
+Left = 65
+Width = 97
+Height = 22
+TabIndex = 7
+Name = "Leefecha"
+Container1.Name = "Container1"
+Fecha.Name = "Fecha"
+Buscar.Name = "Buscar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LDEPM</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>horaini</objname>
+		<parent>Formamsl1</parent>
+		<properties>Alignment = 3
+Height = 20
+InputMask = "99:99"
+Left = 165
+TabIndex = 8
+Top = 59
+Width = 55
+Name = "horaini"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+This.Tag = This.Value
+
+ENDPROC
+PROCEDURE LostFocus
+* Desactivar el conteo de minutos si cambio la hora que inicialmente tenia la actividad
+If This.Value &lt;&gt; This.Tag
+	ThisForm.lContar = .F.
+	ThisForm.HoraFin.InputMask = '99:99'
+EndIf
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LDEPN</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>horafin</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 20
+InputMask = "99:99:99"
+Left = 226
+TabIndex = 9
+Top = 59
+Width = 65
+Name = "horafin"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LUTBQ</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda4</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Descripción"
+Height = 16
+Left = 306
+Top = 38
+Width = 59
+TabIndex = 12
+Name = "Leyenda4"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LUTBR</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>obs</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+AddLineFeeds = .T.
+Height = 90
+Left = 306
+TabIndex = 13
+Top = 58
+Width = 289
+Name = "obs"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+This.Tag = '*'
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10M4AE9</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda5</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Historial"
+Height = 16
+Left = 85
+Top = 209
+Width = 40
+TabIndex = 18
+Name = "Leyenda5"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10M4AEA</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>hcontacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 226
+Left = 46
+Height = 25
+Width = 55
+Caption = "Contacto"
+TabIndex = 19
+Name = "hcontacto"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+cNumCont = ThisForm.InfoCont.LeeContacto.Clave.Value
+
+If Left(cNumCont,3) == 'F2='
+	cNumCont = ''
+EndIf
+
+* Es un nuevo contacto. No hay historial de este contacto
+If Empty(cNumCont)
+	Alerta('Contacto no existe')
+	Return .F.
+Else
+	* Manda llamar la ventana del historial del contacto
+	Do DoForm With 'CrmHistContacto',cNumCont In Crm
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10M4AEB</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>hcliente</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 226
+Left = 111
+Height = 25
+Width = 55
+Caption = "Cliente"
+TabIndex = 20
+Name = "hcliente"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+cNumCli = ThisForm.InfoCont.LeeCliente.Clave.Value
+
+* El contacto no tiene cliente
+If Empty(cNumCli)
+	Alerta('Contacto no tiene especificado el cliente')
+	Return .F.
+Else
+	* Manda llamar la ventana del historial del cliente
+	Do DoForm With 'CrmHistCliente',cNumCli In Crm
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10M4AEC</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>closebutton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>cerrar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 227
+Left = 210
+Height = 25
+Width = 55
+Caption = "Cerrar"
+TabIndex = 21
+Name = "cerrar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LDEPG</uniqueid>
+		<timestamp>1015700963</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>servtel</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 227
+Left = 410
+Height = 25
+Width = 70
+Caption = "\&lt;Serv. Telef."
+TabIndex = 17
+Visible = .F.
+Name = "servtel"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+* Manda llamar la ventana de Servicio Telefonico
+Do DoForm With 'CrmServTelef' In Crm
+
+* Cerrar la ventana
+ThisForm.Release
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10M4AEE</uniqueid>
+		<timestamp>1049388047</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>save</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 227
+Left = 500
+Height = 25
+Width = 84
+Caption = "F8 = \&lt;Procesar"
+TabIndex = 16
+Name = "save"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+* Grabar la informacion
+With ThisForm
+	
+	* Validar que exista la orden
+	cNumOrden = .NumOrden.Value
+	If Not Empty(cNumOrden)
+		If Not Seek(cNumOrden,'Ordenes')
+			Aviso('No existe ese número de orden')
+			.NumOrden.SetFocus()
+			Return .F.
+		EndIf
+	EndIf
+	
+	With ThisForm.oContacto
+		* Llenar la informacion del contacto	
+		.NumCont = ThisForm.InfoCont.LeeContacto.Clave.Value
+		.NomCont = ThisForm.InfoCont.LeeContacto.Nombre.Value
+		.Empresa = ThisForm.InfoCont.Empresa.Value
+		.Telefono = ThisForm.InfoCont.Telefono.Value
+		.Mail = ThisForm.InfoCont.Mail.Value
+		.NumCli = ThisForm.InfoCont.LeeCliente.Clave.Value
+
+		* Manda llamar el metodo para validar la informacion para grabar el contacto
+		If Not .ValidAgregar()
+			Alerta(.cError)
+			* Manda llamar metodo para enviar el focus al control especifico
+			ThisForm.EnviarFocus()
+			Return .F.
+		EndIf
+	
+	EndWith
+
+	* Manda llamar la funcion ValHora2() para
+	* validar que la fecha y hora esten correctas
+	dFecha = .LeeFecha.Value
+	cHoraIni = .HoraIni.Value
+	cHoraFin = .HoraFin.Value
+	dFechaIni = ValHora2(dFecha,cHoraIni)
+	dFechaFin = ValHora2(dFecha,cHoraFin)
+
+	With ThisForm.oActividad	
+		* Llenar la informacion de la actividad
+		.Id = Padl(Allt(ThisForm.Id.Value),10)
+		.Tipo = ThisForm.Tipo.Nombre.Value
+		.Fecha = dFechaIni
+		.FechaFin = dFechaFin
+		.Obs = ThisForm.Obs.Value
+		.NumUser = ThisForm.cNumUser
+		.NumUserGen = m.NumUser
+		.Actividad = .T.
+		.NumCotiza = ThisForm.cNumCotiza
+		.StatusCot = ThisForm.nStatusCot
+		.Refer = ThisForm.cRefer
+		.NumOrden = cNumOrden
+		.OrdenPost = ThisForm.cOrdenPost
+		
+		* Manda llamar el metodo para validar la informacion para grabar la actividad
+		If Not .ValidAgregar()
+			Alerta(.cError)
+			* Manda llamar metodo para enviar el focus al control especifico
+			ThisForm.EnviarFocus()
+			Return .F.
+		EndIf
+	
+	EndWith
+	
+	* Manda llamar el metodo para grabar al contacto
+	If Not .oContacto.Agregar()
+		Alerta(.oContacto.cError)
+		Return .F.
+	EndIf
+
+	* Asigna el numero de contacto despues de haberlo grabado
+	.oActividad.NumCont = .oContacto.NumCont
+	
+	Do Case
+		Case .nModo == 1
+			* Agregar
+			* Manda llamar el metodo para agregar una nueva actividad
+			If Not .oActividad.Agregar()
+				Alerta(.oActividad.cError)
+				Return .F.
+			EndIf
+			
+		Case .nModo == 2
+			* Modificar
+			* Manda llamar el metodo para modificar una actividad
+			If Not .oActividad.Modificar()
+				Alerta(.oActividad.cError)
+				Return .F.
+			EndIf
+			
+	EndCase	
+	
+	* Almacena en unas variables el numero de actividad y contacto
+	cId = .oActividad.Id
+	cNumCont = .oContacto.NumCont
+	m.Obs = .oActividad.Obs
+	
+	* Validar si modifico el numero de orden
+	If cNumOrden &lt;&gt; .cNumOrden
+		* Si modifico el numero de orden
+		* Validar si borro el numero de orden
+		If Not Empty(cNumOrden)
+			* Manda llamar el metodo para quitar las horas del servicio a la orden anterior
+			.oOrden.NumOrden = .cNumOrden
+			.oOrden.RecalcularHorasTotales()
+			
+			* Almacena la nueva orden para recalcular sus horas
+			.oOrden.NumOrden = cNumOrden
+		Else
+			* Si borro el numero de orden. Recalcular las horas invertidas sin este servicio
+			.oOrden.NumOrden = .cNumOrden
+		EndIf
+		
+		* Manda llamar al metodo para recalcular las horas totales
+		.oOrden.RecalcularHorasTotales()
+		
+	EndIf
+	
+	* Manda llamar la ventana de agregar orden de servicio en caso de seleccionar esa opcion
+	If .Agregar.Value = 2
+		Do DoForm With 'CrmAddOrden',cId,cNumCont,m.Obs In Crm
+		.Release
+	EndIf
+	
+	* Cerrar la ventana
+	.Release
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JZAWK</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>infocont</class>
+		<classloc>infocont.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>Infocont</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 78
+Left = 11
+Width = 290
+Height = 117
+TabIndex = 10
+Name = "Infocont"
+LeeContacto.Container1.Name = "Container1"
+LeeContacto.List1.Name = "List1"
+LeeContacto.Nombre.Name = "Nombre"
+LeeContacto.Leyenda1.Name = "Leyenda1"
+LeeContacto.Clave.Name = "Clave"
+LeeContacto.Name = "LeeContacto"
+Leyenda1.Name = "Leyenda1"
+empresa.Name = "empresa"
+Leyenda2.Name = "Leyenda2"
+telefono.Name = "telefono"
+Leyenda3.Name = "Leyenda3"
+mail.Name = "mail"
+Leyenda4.Name = "Leyenda4"
+LeeCliente.Clave.Name = "Clave"
+LeeCliente.Nombre.Name = "Nombre"
+LeeCliente.Buscar.Name = "Buscar"
+LeeCliente.Name = "LeeCliente"
+</properties>
+		<protected/>
+		<methods>PROCEDURE LeeContacto.LostFocus
+DoDefault()
+
+With ThisForm
+	* Muestra la leyenda si el cliente esta suspendido
+	If Not Empty(.InfoCont.LeeCliente.Clave.Value)
+		If Seek(.InfoCont.LeeCliente.Clave.Value,'Clientes')
+			If Clientes.SUSPENDIDO
+				.LabelSuspendido.Visible = .T.
+			Else
+				.LabelSuspendido.Visible = .F.
+			EndIf
+		EndIf
+	EndIf
+
+EndWith
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10LDEPG</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>statictext</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>id</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontBold = .T.
+Alignment = 1
+BorderStyle = 0
+Height = 20
+Left = 525
+TabIndex = 3
+Top = 15
+Width = 70
+Name = "id"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20KYKPO</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>LabelAgregar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Agregar"
+Height = 16
+Left = 322
+Top = 151
+Width = 42
+TabIndex = 14
+Name = "LabelAgregar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20KYKPP</uniqueid>
+		<timestamp>1049388047</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>agregar</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+RowSourceType = 1
+RowSource = "Ninguno,Orden de Servicio"
+DisplayValue = 1
+Value = 1
+Height = 20
+Left = 366
+Style = 2
+TabIndex = 15
+Top = 149
+Width = 155
+Name = "agregar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20MR6ZR</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>contacto</class>
+		<classloc>contacto.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oContacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 172
+Left = 505
+Height = 17
+Width = 28
+Name = "oContacto"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20TBKPF</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>actividad</class>
+		<classloc>actividad.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oActividad</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 172
+Left = 545
+Height = 17
+Width = 28
+Name = "oActividad"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O40SDQB7</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>timer</class>
+		<classloc/>
+		<baseclass>timer</baseclass>
+		<objname>Timer1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 172
+Left = 455
+Height = 25
+Width = 25
+Interval = 1000
+Name = "Timer1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Timer
+* Cambiar la hora cada segundo
+If ThisForm.lContar
+	ThisForm.HoraFin.Value = Time()
+EndIf
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1Q40OVX5A</uniqueid>
+		<timestamp>946491200</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>labelsuspendido</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontBold = .T.
+FontSize = 14
+BackStyle = 1
+Caption = "SUSPENDIDO"
+Height = 25
+Left = 379
+Top = 33
+Width = 128
+TabIndex = 22
+ForeColor = 255,255,0
+BackColor = 255,0,0
+Name = "labelsuspendido"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2BI0LCZW8</uniqueid>
+		<timestamp>946627819</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>LabelOrden</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "# \&lt;Orden"
+Height = 16
+Left = 18
+Top = 17
+Width = 41
+TabIndex = 1
+Name = "LabelOrden"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2BI0LCZW9</uniqueid>
+		<timestamp>946494034</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>numorden</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 20
+Left = 65
+TabIndex = 2
+Top = 15
+Width = 75
+Name = "numorden"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Valid
+*
+* NumOrden
+*
+* Alinear el numero de orden
+*
+This.Value = PadL(Allt(This.Value),10)
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2BK0QGIKI</uniqueid>
+		<timestamp>946627221</timestamp>
+		<class>orden</class>
+		<classloc>orden.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oOrden</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 195
+Left = 505
+Height = 20
+Width = 30
+Name = "oOrden"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+Arial, 1, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

@@ -1,0 +1,1493 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10S3LCN</uniqueid>
+		<timestamp>863398099</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10S3LCO</uniqueid>
+		<timestamp>965693686</timestamp>
+		<class>formamsl</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 380
+Width = 765
+DoCreate = .T.
+Caption = "Consultar Actividades"
+cnumuser =  
+Name = "Formamsl1"
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+If Not OpenDbf('Cia') Or;
+	Not OpenDbf('Crm','ID') Or;
+	Not OpenDbf('Contactos','NUMCONT') Or;
+	Not OpenDbf('Usuarios','NUMUSER') Or;
+	Not OpenDbf('Clientes','NUMCLI')
+	Return .F.
+EndIf
+
+* Crear el temporal
+Create Cursor Temp(;
+	ID			C(10),;
+	FECHA		D(8),;
+	INICIO		C(5),;
+	DURACION	N(5),;
+	NOMCONT		C(50),;
+	EMPRESA		C(50),;
+	TIPO		C(20),;
+	OBS			C(100),;
+	NUMUSER		C(5))
+
+With ThisForm
+	* Asignar la fecha
+	.Fecha1.SetValue(Date())
+	.Fecha2.SetValue(Date())
+	
+	.Grid1.GridLineColor = .BackColor
+	
+	* Deshabilitar la opcion de modificar
+	.Modificar.Enabled = .F.
+
+EndWith
+
+ENDPROC
+PROCEDURE Unload
+* Borra el temporal
+DelAlias('Temp')
+DoDefault()
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>cnumuser
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10S4A71</uniqueid>
+		<timestamp>863399147</timestamp>
+		<class>leyenda</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Usuario"
+Height = 16
+Left = 31
+Top = 19
+Width = 39
+TabIndex = 1
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10S969P</uniqueid>
+		<timestamp>863535414</timestamp>
+		<class>leernombre</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>LeeContacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 60
+Left = 25
+Width = 279
+Height = 25
+TabIndex = 5
+calias = Contactos
+ccampoclave = Contactos.NUMCONT
+ccamponombre = Contactos.NOMCONT
+cformabusqueda = BuscaCont
+nanchoclave = 6
+ctagclave = NumCont
+ctagnombre = NomCont
+Name = "LeeContacto"
+Container1.Top = 0
+Container1.Left = 50
+Container1.Width = 227
+Container1.Height = 21
+Container1.Name = "Container1"
+List1.Name = "List1"
+Nombre.Height = 17
+Nombre.Left = 52
+Nombre.Top = 2
+Nombre.Width = 209
+Nombre.Name = "Nombre"
+Leyenda1.Caption = "Con\&lt;tacto"
+Leyenda1.Top = 2
+Leyenda1.Name = "Leyenda1"
+Clave.Left = 200
+Clave.Top = 4
+Clave.Name = "Clave"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10S969R</uniqueid>
+		<timestamp>863399147</timestamp>
+		<class>leyenda</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda4</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Clie\&lt;nte"
+Height = 16
+Left = 36
+Top = 39
+Width = 34
+TabIndex = 3
+Name = "Leyenda4"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10S969S</uniqueid>
+		<timestamp>863789495</timestamp>
+		<class>leecve</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>LeeCliente</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 37
+Left = 75
+Width = 232
+Height = 20
+TabIndex = 4
+calias = Clientes
+cexprnombre = Clientes.NOMCLI
+cformabusqueda = ListClie
+nanchoclave = 5
+Name = "LeeCliente"
+Clave.Name = "Clave"
+Nombre.Height = 20
+Nombre.Left = 80
+Nombre.Top = 0
+Nombre.Width = 150
+Nombre.Name = "Nombre"
+Buscar.Name = "Buscar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10S969T</uniqueid>
+		<timestamp>865502330</timestamp>
+		<class>leyenda</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Fecha"
+Height = 16
+Left = 38
+Top = 85
+Width = 32
+TabIndex = 6
+Name = "Leyenda2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10S969V</uniqueid>
+		<timestamp>865502330</timestamp>
+		<class>leyenda</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda3</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "a"
+Height = 16
+Left = 163
+Top = 85
+Width = 8
+TabIndex = 8
+Name = "Leyenda3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10S969Y</uniqueid>
+		<timestamp>965693686</timestamp>
+		<class>boton</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>consultar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 78
+Left = 515
+Height = 25
+Width = 65
+Caption = "\&lt;Consultar"
+TabIndex = 10
+Name = "consultar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+With ThisForm
+		
+	* Crear variables
+	cNumUser = ''
+	cNumCli = ''
+	cNumCont = ''
+	dFecha1 = {}
+	dFecha2 = {}
+	cNumCli = .LeeCliente.Clave.Value
+	
+	If Not Empty(.LeeContacto.Nombre.Value)
+		cNumCont = .LeeContacto.Clave.Value
+	Endif
+	
+	If Empty(.Usuario.Value)
+		cNumUser = ''
+	Else
+		cNumUser = .cNumUser
+	Endif
+
+	dFecha1 = .Fecha1.dValue
+	dFecha2 = .Fecha2.dValue
+
+	* Borra el temporal
+	Select Temp
+	Zap
+	
+	.Grid1.RecordSource = ''
+
+	* Busca en CRM las actividades que cumplan con las restricciones
+	If not SqlMsl('Temp','Select Crm.ID,Crm.FECHA, '+;
+		'SubStr(TToC(Crm.FECHA),12,5) As Inicio, '+;
+		'INT((Crm.FECHAFIN-Crm.FECHA)/60)+1 As Duracion, '+;
+		'Contactos.NOMCONT As NomCont, Contactos.EMPRESA As Empresa,Crm.TIPO, '+;
+		'StrTran(Left(Crm.OBS,100),Chr(13)," ") As Obs,Crm.NUMUSER,Recno() As RECNO ' +;
+		'From Crm '+;
+		'Left Join Contactos On Crm.NUMCONT == Contactos.NUMCONT '+;
+		'Where '+;
+		'Crm.ACTIVIDAD = .T. ' + ' and '+;
+		IIF(Empty(cNumUser), '.t.', 'Crm.NUMUSER == m.Val1' ) +' and '+;
+		IIF(Empty(cNumCli), '.t.', 'Contactos.NUMCLI == m.Val2' ) +' and '+;
+		IIF(Empty(cNumCont), '.t.', 'Crm.NUMCONT == m.Val3' ) +' and '+;
+		'Between(DToS(Crm.FECHA),m.Val4,m.Val5)',;
+		cNumUser,cNumCli,cNumCont,dtos(dFecha1),dtos(dFecha2))
+Return
+	Endif
+	
+	* Crea la relacion del temporal con la tabla de usuarios.dbf
+	Select Temp
+	Set Relation To NUMUSER Into Usuarios
+	
+	* Muestra los datos de TEMP
+	.LockScreen = .T.
+	With ThisForm.Grid1
+		.RecordSourceType = 1
+		.RecordSource = 'Temp'
+
+		Select Temp
+		Index On FECHA Tag Fecha
+		Set Order To Fecha
+		
+		.Column1.ControlSource = 'Allt(Temp.ID)'
+		.Column2.ControlSource = 'MexDate3(Temp.FECHA)'
+		.Column3.ControlSource = 'Temp.INICIO'
+		.Column4.ControlSource = 'Temp.DURACION'
+		.Column5.ControlSource = 'Temp.NOMCONT'
+		.Column6.ControlSource = 'Temp.EMPRESA'
+		.Column7.ControlSource = 'Temp.TIPO'
+		.Column8.ControlSource = 'Temp.OBS'
+		.Column9.ControlSource = 'Usuarios.NOMUSER'
+		
+		Go Bott
+		.SetFocus
+
+	EndWith
+	.LockScreen = .F.
+
+	* Muestra mensaje si no se encontro informacion
+	If Reccount('Temp')==0
+		Alerta('No se encontró información')
+		Return
+	Else
+		* Habilitar la opcion de modificar
+		.Modificar.Enabled = .T.
+		
+	Endif
+
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SB9O3</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>boton</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>agregar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 78
+Left = 587
+Height = 25
+Width = 65
+Caption = "\&lt;Agregar"
+TabIndex = 12
+Name = "agregar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+* Abre la ventana para agregar una nueva actividad
+Do DoForm With 'CrmAddActiv',1 In Crm
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SB9O4</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>boton</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>modificar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 78
+Left = 659
+Height = 25
+Width = 65
+Caption = "\&lt;Modificar"
+TabIndex = 13
+Name = "modificar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+* Abre la ventana para modificar una actividad
+Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2T3</uniqueid>
+		<timestamp>863912805</timestamp>
+		<class>grid</class>
+		<classloc/>
+		<baseclass>grid</baseclass>
+		<objname>Grid1</objname>
+		<parent>Formamsl1</parent>
+		<properties>ColumnCount = 9
+FontSize = 8
+DeleteMark = .F.
+GridLines = 2
+Height = 260
+Left = 8
+Panel = 1
+ReadOnly = .T.
+RecordMark = .F.
+RowHeight = 17
+ScrollBars = 2
+TabIndex = 11
+Top = 110
+Width = 750
+Name = "Grid1"
+Column1.FontSize = 8
+Column1.Width = 40
+Column1.ReadOnly = .T.
+Column1.Name = "Column1"
+Column2.FontSize = 8
+Column2.Width = 56
+Column2.ReadOnly = .T.
+Column2.Name = "Column2"
+Column3.FontSize = 8
+Column3.Width = 34
+Column3.ReadOnly = .T.
+Column3.Name = "Column3"
+Column4.FontSize = 8
+Column4.Alignment = 2
+Column4.Width = 25
+Column4.ReadOnly = .T.
+Column4.Name = "Column4"
+Column5.FontSize = 8
+Column5.Width = 63
+Column5.ReadOnly = .T.
+Column5.Name = "Column5"
+Column6.FontSize = 8
+Column6.Width = 81
+Column6.ReadOnly = .T.
+Column6.Name = "Column6"
+Column7.FontSize = 8
+Column7.Width = 47
+Column7.ReadOnly = .T.
+Column7.Name = "Column7"
+Column8.FontSize = 8
+Column8.Width = 307
+Column8.ReadOnly = .T.
+Column8.Name = "Column8"
+Column9.FontSize = 8
+Column9.Width = 68
+Column9.ReadOnly = .T.
+Column9.Name = "Column9"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2T4</uniqueid>
+		<timestamp>863398560</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column1</parent>
+		<properties>FontSize = 8
+Caption = "Folio"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2T5</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column1</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+* FOLIO
+* Dio doble clic
+* Manda llamar la ventana para modificar la actividad
+Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* FOLIO
+If nKeyCode==13
+	* Presiono [Enter]
+	* Manda llamar la ventana para modificar la actividad
+	Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+	
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2T6</uniqueid>
+		<timestamp>863398560</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column2</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Fecha"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2T7</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column2</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+* FECHA
+* Dio doble clic
+* Manda llamar la ventana para modificar la actividad
+Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* FECHA
+If nKeyCode==13
+	* Presiono [Enter]
+	* Manda llamar la ventana para modificar la actividad
+	Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+	
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2T8</uniqueid>
+		<timestamp>863851098</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column3</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Inicio "
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2T9</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column3</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+* INI-FIN
+* Dio doble clic
+* Manda llamar la ventana para modificar la actividad
+Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* INI-FIN
+If nKeyCode==13
+	* Presiono [Enter]
+	* Manda llamar la ventana para modificar la actividad
+	Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+	
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2TA</uniqueid>
+		<timestamp>863851098</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column4</parent>
+		<properties>FontSize = 8
+Caption = "Dur."
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2TB</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column4</parent>
+		<properties>FontSize = 8
+Alignment = 2
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+* CONTACTO
+* Dio doble clic
+* Manda llamar la ventana para modificar la actividad
+Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* CONTACTO
+If nKeyCode==13
+	* Presiono [Enter]
+	* Manda llamar la ventana para modificar la actividad
+	Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+	
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2TC</uniqueid>
+		<timestamp>863851098</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column5</parent>
+		<properties>FontSize = 8
+Caption = "Contacto"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2TD</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column5</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+* EMPRESA
+* Dio doble clic
+* Manda llamar la ventana para modificar la actividad
+Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* EMPRESA
+If nKeyCode==13
+	* Presiono [Enter]
+	* Manda llamar la ventana para modificar la actividad
+	Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+	
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2TE</uniqueid>
+		<timestamp>863851098</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column6</parent>
+		<properties>FontSize = 8
+Caption = "Empresa"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2TF</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column6</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+* TIPO
+* Dio doble clic
+* Manda llamar la ventana para modificar la actividad
+Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* TIPO
+If nKeyCode==13
+	* Presiono [Enter]
+	* Manda llamar la ventana para modificar la actividad
+	Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+	
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2TG</uniqueid>
+		<timestamp>863851098</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column7</parent>
+		<properties>FontSize = 8
+Caption = "Tipo"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SM2TH</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column7</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+* DESCRIPCION
+* Dio doble clic
+* Manda llamar la ventana para modificar la actividad
+Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* DESCRIPCION
+If nKeyCode==13
+	* Presiono [Enter]
+	* Manda llamar la ventana para modificar la actividad
+	Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+	
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SX3F6</uniqueid>
+		<timestamp>863851098</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column8</parent>
+		<properties>FontSize = 8
+Caption = "Descripción"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10SX3F7</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column8</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+* USUARIO
+* Dio doble clic
+* Manda llamar la ventana para modificar la actividad
+Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* USUARIO
+If nKeyCode==13
+	* Presiono [Enter]
+	* Manda llamar la ventana para modificar la actividad
+	Do DoForm With 'CrmAddActiv',2,Temp.RECNO In Crm
+	
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O80M3TVE</uniqueid>
+		<timestamp>863851098</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column9</parent>
+		<properties>FontSize = 8
+Caption = "Usuario"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O80M3TVF</uniqueid>
+		<timestamp>863851098</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column9</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O10S3LCN</uniqueid>
+		<timestamp>965692782</timestamp>
+		<class>boton</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>excel</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 78
+Left = 730
+Width = 25
+Picture = ..\sistemas\msllib60\x.bmp
+Caption = ""
+TabIndex = 14
+Name = "excel"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+With Thisform
+	* Mada a Excel la consulta	
+	cNomcia = Allt(Cia.NOMCIA)
+	cTitulo = .Caption
+	cColumnas = 'Folio^Fecha^Inicio^Duración^Contacto^Empresa^Tipo^Descripción^Usuario^Reg'
+	cMascaras = 'C^D^C^99,999^C^C^C^C^C^C'
+	OpenExcel(cNomCia,cTitulo,cColumnas,cMascaras)
+
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O70Q1CVJ</uniqueid>
+		<timestamp>965692361</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>usuario</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+RowSourceType = 6
+RowSource = "Usuarios.NOMUSER"
+Height = 20
+Left = 75
+Style = 2
+TabIndex = 2
+Top = 15
+Width = 230
+Name = "usuario"
+</properties>
+		<protected/>
+		<methods>PROCEDURE InteractiveChange
+* Almacena en una propiedad el numero de usuario
+ThisForm.cNumUser = Usuarios.NUMUSER
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1OV0ZKVD8</uniqueid>
+		<timestamp>865502330</timestamp>
+		<class>textofecha</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>fecha1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 20
+Left = 75
+TabIndex = 7
+Top = 83
+Width = 80
+Name = "fecha1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1OV0ZKVD9</uniqueid>
+		<timestamp>865502330</timestamp>
+		<class>textofecha</class>
+		<classloc>f:\sistemas\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>fecha2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 20
+Left = 175
+TabIndex = 9
+Top = 83
+Width = 85
+Name = "fecha2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

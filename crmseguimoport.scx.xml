@@ -1,0 +1,2213 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ6</uniqueid>
+		<timestamp>1177777555</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ7</uniqueid>
+		<timestamp>1178371185</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 455
+Width = 580
+DoCreate = .T.
+Caption = "Seguimiento de Oportunidades"
+Name = "Formamsl1"
+Marco.ZOrderSet = 0
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+LParameter cNumOport
+If Not OpenDbf('Oport','NUMOPORT') Or;
+	Not OpenDbf('Contactos','NUMCONT') Or;
+	Not OpenDbf('Crm','ID') Or;
+	Not OpenDbf('Clientes','NUMCLI') Or;
+	Not OpenDbf('Usuarios','NUMUSER') Or;
+	Not OpenDbf('Docum','TIPONUM')
+	Return .F.
+EndIf
+
+With ThisForm
+	
+	* Cargar los tipos de oportunidades
+	.TiposdeOport()
+	
+	* Cargar los tipos de probabilidad de cierre
+	.TiposdeProb()
+	
+	* Almacena en una propiedad de la forma el id de la oportunidad
+	.cNumOport = cNumOport
+	
+	* Localizarla para mostrar su informacion
+	If Not Seek(cNumOport,'Oport')
+		Alerta('No se localizo la oportunidad')
+		Return .F.
+	EndIf
+	
+	* Obtener el status
+	cStatus = ''
+	Do Case
+		Case Oport.STATUS == 0
+			cStatus = 'Nueva'
+		Case Oport.STATUS == 1
+			cStatus = 'Trabajando'
+		Case Oport.STATUS == 2
+			cStatus = 'Esperando'
+		Case Oport.STATUS == 3
+			cStatus = 'Ganada'
+		Case Oport.STATUS == 4
+			cStatus = 'Perdida'
+	EndCase
+	.Status.Value = cStatus
+	
+	.FCreada.SetValue(Oport.CREADA)
+	.NumOport.Value = Oport.NUMOPORT
+	.ConocioEn.Value = Oport.CONOCIOEN
+	.Tipo.Value = Oport.TIPO
+	.Asunto.Value = Oport.ASUNTO
+	.NumCot.Value = Oport.NUMCOT
+	.Importe.Value = Oport.IMPORTE
+	.Obs.Value = Oport.OBS
+	.ObsCli.Value = Oport.OBSCLI
+	.ProbCierre.Value = Oport.PROBCIERRE
+	
+	* Mostrar el usuario
+	cNumUser = Oport.NUMUSER
+	With ThisForm.Usuario
+		.RowSourceType = 6
+		.RowSource = 'Usuarios.NOMUSER'
+		
+		Select Usuarios
+		Seek(cNumUser)
+		.Value = Usuarios.NOMUSER
+		.InteractiveChange()
+	EndWith
+	
+	* Mostrar el contacto
+	.cNumCont = Oport.NUMCONT
+	.cNumCli = ''
+	If Seek(.cNumCont,'Contactos')
+		.Contacto.Value = Contactos.NOMCONT
+		.Empresa.Value = Contactos.EMPRESA
+		.Telefono.Value = Contactos.TELEFONO
+		.Email.Value = Contactos.MAIL
+		.cNumCli = Contactos.NUMCLI
+	EndIf
+	
+	* Ocultar controles que solo se usan al hacer clic en Esperar, Cerrada Perdida
+	.ActControles()
+	
+	* Deshabilitar los botones si ya esta ganada o perdida
+	If Oport.STATUS == 3 Or Oport.STATUS == 4
+		.Esperar.Enabled = .F.
+		.Trabajando.Enabled = .F.
+		.Cerrada.Enabled = .F.
+		.Perdida.Enabled = .F.
+	EndIf
+	
+	* Enviar el cursor al seguimiento realizado
+	.Seguimiento.SetFocus()
+	
+EndWith
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nkeycode,nshiftaltctrl
+* No cerrar la ventana al presionar la tecla [ESC]
+If nKeyCode == 27
+	NoDefault
+	Return
+EndIf
+
+ENDPROC
+PROCEDURE Unload
+*
+* UnLoad
+*
+* Borrar los temporales
+DelAlias('TipoOpor')
+DelAlias('TipoProb')
+
+ENDPROC
+PROCEDURE actcontroles
+*
+* ActControles
+*
+* * Ocultar controles que solo se usan al hacer clic en Esperar, Cerrada Perdida
+*
+With ThisForm
+	
+	* Esperar
+	.InfoEsperar.Visible = .F.
+	.InfoEsperar.Left = 275
+	.InfoEsperar.Top = 335
+	If Not .Esperar.Enabled
+		.Esperar.Enabled = .T.
+	EndIf
+	
+	* Cerrada
+	.InfoCerrada.Visible = .F.
+	.InfoCerrada.Left = 275
+	.InfoCerrada.Top = 335
+	If Not .Cerrada.Enabled
+		.Cerrada.Enabled = .T.
+	EndIf
+	
+	* Perdida
+	.InfoPerdida.Visible = .F.
+	If Not .Perdida.Enabled
+		.Perdida.Enabled = .T.
+	EndIf
+	
+	* Disminuir el tamaño de la ventana
+	.Height = 350
+	.AutoCenter = .T.
+	
+EndWith
+
+ENDPROC
+PROCEDURE actualizaoport
+*
+* ActualizaOport
+*
+* Actualiza la informacion de la oportunidad
+*
+With ThisForm
+	
+	* Localizar la oportunidad y actualiza la informacion
+	Select Oport
+	Seek(.cNumOport)
+	Replace	NUMCLI		With	.cNumCli,;
+			NUMUSER		With	.cNumUser,;
+			CONOCIOEN	With	Allt(.ConocioEn.Value),;
+			TIPO		With	Allt(.Tipo.Value),;
+			ASUNTO		With	Allt(.Asunto.Value),;
+			NUMCOT		With	.NumCot.Value,;
+			IMPORTE		With	.Importe.Value,;
+			OBS			With	Allt(.Obs.Value),;
+			OBSCLI		With	Allt(.ObsCli.Value),;
+			INICIADA	With	IIF(Empty(INICIADA),Date(),INICIADA),;
+			PROBCIERRE	With	.ProbCierre.Value
+	
+EndWith
+
+ENDPROC
+PROCEDURE agregaractiv
+*
+* AgregarActiv
+*
+* Agrega la actividad en el CRM
+*
+With ThisForm
+	
+	With ThisForm.oActividad
+		
+		* Llenar la informacion de la actividad
+		.Id = ''
+		.NumCont = ThisForm.cNumCont
+		.Tipo = 'Seguim Oport'
+		.Fecha = DateTime()
+		.FechaFin = DateTime()
+		.Obs = ThisForm.Seguimiento.Value
+		.NumUser = ThisForm.cNumUser
+		.NumUserGen = ThisForm.cNumUser
+		.Actividad = .T.
+		.NumCotiza = ''
+		.StatusCot = 0
+		.Refer = ''
+		.NumOrden = ''
+		.OrdenPost = ''
+		
+		* Manda llamar el metodo para validar la informacion para grabar la actividad
+		If Not .ValidAgregar()
+			Alerta(.cError)
+			* Manda llamar metodo para enviar el focus al control especifico
+			ThisForm.LeeObs.SetFocus()
+			Return .F.
+		EndIf
+		
+		* Agregar una nueva actividad
+		If Not .Agregar()
+			Alerta(.cError)
+			Return .F.
+		EndIf
+	EndWith
+	
+	* SI se logro agregar la actividad
+	Return .T.
+	
+EndWith
+
+ENDPROC
+PROCEDURE tiposdeoport
+*
+* TiposdeOport
+*
+* Cargar los tipos de oportunidades
+*
+With ThisForm
+	Local i,cTipos,cTipoOport
+	
+	* Obtener los tipos de oportunidades desde el Config.msl
+	cTipos = GetMsl('CrmTiposOport')
+	cTipoOport = ''
+	
+	* Crear el temporal donde se van a almacenar los tipos
+	Create Cursor TipoOpor(TIPO C(15))
+	Index On Upper(TIPO) Tag Tipo
+	
+	* Agregarlos al temporal
+	i = 1
+	Do While .T.
+		cTipoOport = SubLin(cTipos,i)
+		If Empty(cTipoOport)
+			Exit
+		Endif
+		Insert Into TipoOpor Values (cTipoOport)
+		i=i+1
+	EndDo
+	
+	.Tipo.RowSourceType = 6
+	.Tipo.RowSource = 'TipoOpor.TIPO'
+	
+EndWith
+
+ENDPROC
+PROCEDURE tiposdeprob
+*
+* TiposdeProb
+*
+* Cargar los tipos de probabilidad de cierre
+*
+With ThisForm
+	Local i,cTipos,cTipoProb
+	
+	* Obtener los tipos de probabilidad de cierre desde el Config.msl
+	cTipos = GetMsl('CrmProbCierre')
+	cTipoProb = ''
+	
+	* Crear el temporal donde se van a almacenar los tipos
+	Create Cursor TipoProb(TIPO C(15))
+	Index On Upper(TIPO) Tag Tipo
+	
+	* Agregarlos al temporal
+	i = 1
+	Do While .T.
+		cTipoProb = SubLin(cTipos,i)
+		If Empty(cTipoProb)
+			Exit
+		Endif
+		Insert Into TipoProb Values (cTipoProb)
+		i=i+1
+	EndDo
+	
+	.ProbCierre.RowSourceType = 6
+	.ProbCierre.RowSource = 'TipoProb.TIPO'
+	
+EndWith
+
+ENDPROC
+PROCEDURE validainfo
+*
+* ValidaInfo
+*
+* Metodo para validar la informacion antes de grabar
+*
+With ThisForm
+	
+	* Validar que no se omita el tipo
+	If Empty(.Tipo.Value) Or Allt(.Tipo.Value) == '&lt; Definir &gt;'
+		Alerta('No se puede omitir el tipo')
+		.Tipo.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Validar que no se omita el agente
+	If Empty(.Usuario.Value)
+		Alerta('No se puede omitir el agente')
+		.Usuario.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Validar que no se omita el asunto
+	If Empty(.Asunto.Value)
+		Alerta('No se puede omitir el asunto')
+		.Asunto.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Validar que no se omitan las observaciones
+	If Empty(.Obs.Value)
+		Alerta('No se puede omitir la observación')
+		.Obs.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Validar que no se omita el seguimiento realizado
+	If Empty(.Seguimiento.Value)
+		Alerta('No se puede omitir el seguimiento')
+		.Seguimiento.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Validar que no se omita el comentario del prospecto
+	If Empty(.ObsCli.Value)
+		Alerta('No se puede omitir el comentario del prospecto')
+		.ObsCli.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Validar que no se omita la probabilidad de cierre
+	If Empty(.ProbCierre.Value)
+		Alerta('No se puede omitir la probabilidad de cierre')
+		.ProbCierre.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Pasaron todas las validaciones
+	Return .T.
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>cnumuser
+cnumcont
+cnumoport
+cnumcli
+nstatus
+*actcontroles 
+*tiposdeoport 
+*agregaractiv 
+*validainfo 
+*actualizaoport 
+*tiposdeprob 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD1</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>contacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 16
+ReadOnly = .T.
+TabIndex = 1
+Top = 18
+Width = 260
+ZOrderSet = 1
+Name = "contacto"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD2</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>empresa</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 16
+ReadOnly = .T.
+TabIndex = 2
+Top = 40
+Width = 260
+ZOrderSet = 2
+Name = "empresa"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD3</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>telefono</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 16
+ReadOnly = .T.
+TabIndex = 3
+Top = 62
+Width = 260
+ZOrderSet = 3
+Name = "telefono"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD4</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>email</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 16
+ReadOnly = .T.
+TabIndex = 4
+Top = 84
+Width = 260
+ZOrderSet = 4
+Name = "email"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD5</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>statictext</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>status</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontBold = .T.
+Height = 21
+Left = 299
+TabIndex = 5
+ToolTipText = "Status de la oportunidad"
+Top = 18
+Width = 90
+ZOrderSet = 5
+Name = "status"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD6</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>textofecha</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>fcreada</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 397
+ReadOnly = .T.
+TabIndex = 6
+ToolTipText = "Fecha de creación"
+Top = 18
+Width = 80
+Style = 1
+ZOrderSet = 6
+Name = "fcreada"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD7</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>statictext</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>numoport</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 20
+Left = 486
+TabIndex = 7
+ToolTipText = "Id"
+Top = 19
+Width = 80
+ZOrderSet = 7
+Name = "numoport"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0MVQPO</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>probcierre</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 21
+Left = 147
+Style = 2
+TabIndex = 23
+Top = 260
+Width = 110
+ZOrderSet = 8
+Name = "probcierre"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ6</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>tipo</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 21
+Left = 299
+Style = 2
+TabIndex = 9
+ToolTipText = "Tipo de oportunidad"
+Top = 62
+Width = 110
+ZOrderSet = 9
+Name = "tipo"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W7ZF8</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>usuario</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 20
+Left = 416
+Style = 2
+TabIndex = 10
+ToolTipText = "Agente que dará seguimiento"
+Top = 62
+Width = 150
+ZOrderSet = 10
+Name = "usuario"
+</properties>
+		<protected/>
+		<methods>PROCEDURE InteractiveChange
+*
+* Usuario
+*
+* Almacena en una propiedad de la forma el numero de usuario
+ThisForm.cNumUser = Usuarios.NUMUSER
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0PWKP2</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda6</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Coti\&lt;zación No."
+Height = 16
+Left = 299
+Top = 108
+Width = 71
+TabIndex = 12
+ZOrderSet = 11
+Name = "Leyenda6"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0PWKP3</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>numcot</objname>
+		<parent>Formamsl1</parent>
+		<properties>Alignment = 3
+Format = "!K"
+Height = 21
+Left = 372
+TabIndex = 13
+Top = 106
+Width = 80
+ZOrderSet = 12
+Name = "numcot"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+*
+* NumCot
+*
+* Al dar doble clic, abrir la consulta individual de la cotizacion
+*
+OpVentas(2,' Q'+This.Value)
+
+ENDPROC
+PROCEDURE Valid
+*
+* NumCot
+*
+With ThisForm
+	
+	* Alinear el folio del numero de cotizacion
+	This.Value = PadL(Allt(This.Value),10)
+	
+	* Si esta vacio el importe, mostrar el total de la cotizacion
+	If Empty(.Importe.Value)
+		If Not Empty(This.Value)
+			If Seek(' Q'+This.Value,'Docum')
+				.Importe.Value = Docum.IMPORTE-Docum.DESCUENTO+Docum.IMPUESTO1+Docum.IMPUESTO2-Docum.RETENCION1-Docum.RETENCION2
+			Else
+				Alerta('No existe la cotización')
+				Return 0
+			EndIf
+		EndIf
+	EndIf
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ6</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Valor"
+Height = 16
+Left = 456
+Top = 108
+Width = 28
+TabIndex = 14
+ZOrderSet = 13
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ7</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>importe</objname>
+		<parent>Formamsl1</parent>
+		<properties>Alignment = 3
+Value = 0
+Height = 21
+InputMask = "999,999,999.99"
+Left = 486
+TabIndex = 15
+Top = 106
+Width = 80
+ZOrderSet = 14
+Name = "importe"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ6</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>asunto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 299
+MaxLength = 50
+TabIndex = 11
+ToolTipText = "Asunto"
+Top = 84
+Width = 267
+ZOrderSet = 15
+Name = "asunto"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ6</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Observaciones"
+Height = 16
+Left = 16
+Top = 110
+Width = 76
+TabIndex = 16
+ZOrderSet = 16
+Name = "Leyenda2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ7</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>obs</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 45
+Left = 16
+TabIndex = 17
+Top = 127
+Width = 262
+ZOrderSet = 17
+Name = "obs"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD1</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda3</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Seguimiento Realizado"
+Height = 16
+Left = 16
+Top = 173
+Width = 110
+TabIndex = 18
+ZOrderSet = 18
+Name = "Leyenda3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD2</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>seguimiento</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 45
+Left = 16
+TabIndex = 19
+Top = 190
+Width = 550
+ZOrderSet = 19
+Name = "seguimiento"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0WNPLQ</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda4</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Comentario del Prospecto"
+Height = 16
+Left = 16
+Top = 239
+Width = 125
+TabIndex = 20
+ZOrderSet = 20
+Name = "Leyenda4"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0WNPLR</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>obscli</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 147
+MaxLength = 50
+TabIndex = 21
+Top = 237
+Width = 375
+ZOrderSet = 21
+Name = "obscli"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ6</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda5</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Probabilidad de Cierre"
+Height = 16
+Left = 34
+Top = 262
+Width = 107
+TabIndex = 22
+ZOrderSet = 22
+Name = "Leyenda5"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0X61SW</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>hcontacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 288
+Left = 16
+Height = 40
+Width = 60
+Picture = ..\..\msllib60\almac.bmp
+Caption = "\&lt;Historial"
+TabIndex = 31
+ZOrderSet = 23
+Name = "hcontacto"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* HContacto
+*
+* Manda llamar la ventana del historial del contacto
+Do DoForm With 'CrmHistContacto',ThisForm.cNumCont In Crm
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49I0Y40KL</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>conocioen</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 299
+MaxLength = 50
+TabIndex = 8
+ToolTipText = "Cómo nos conoció"
+Top = 40
+Width = 267
+ZOrderSet = 24
+Name = "conocioen"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0XGKP8</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>container</class>
+		<classloc/>
+		<baseclass>container</baseclass>
+		<objname>infoperdida</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 337
+Left = 10
+Width = 562
+Height = 113
+BackStyle = 0
+BorderWidth = 0
+TabIndex = 30
+ZOrderSet = 25
+Name = "infoperdida"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0XGKP9</uniqueid>
+		<timestamp>1177911719</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda2</objname>
+		<parent>Formamsl1.infoperdida</parent>
+		<properties>Caption = "¿Por qué perdimos?"
+Height = 16
+Left = 6
+Top = 3
+Width = 98
+TabIndex = 1
+Name = "Leyenda2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0XGKPA</uniqueid>
+		<timestamp>1178362022</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>causaperd</objname>
+		<parent>Formamsl1.infoperdida</parent>
+		<properties>FontSize = 8
+Height = 45
+Left = 6
+TabIndex = 2
+Top = 20
+Width = 270
+Name = "causaperd"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0XGKPB</uniqueid>
+		<timestamp>1178362022</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda3</objname>
+		<parent>Formamsl1.infoperdida</parent>
+		<properties>Caption = "¿Qué podemos hacer para mejorar?"
+Height = 16
+Left = 290
+Top = 3
+Width = 176
+TabIndex = 3
+Name = "Leyenda3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0XGKPC</uniqueid>
+		<timestamp>1178362022</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>obsmejorar</objname>
+		<parent>Formamsl1.infoperdida</parent>
+		<properties>FontSize = 8
+Height = 45
+Left = 290
+TabIndex = 4
+Top = 20
+Width = 270
+Name = "obsmejorar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0Y9UWD</uniqueid>
+		<timestamp>1178371185</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>guardar</objname>
+		<parent>Formamsl1.infoperdida</parent>
+		<properties>Top = 78
+Left = 251
+Height = 25
+Width = 60
+Caption = "\&lt;Guardar"
+TabIndex = 5
+Name = "guardar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* InfoPerdida.Guardar
+*
+With ThisForm
+	
+	* Si no pasa las validaciones no continuar
+	If Not .ValidaInfo()
+		Return .F.
+	EndIf
+	
+	* Validar que no se omita el comentario de por que perdimos
+	If Empty(.InfoPerdida.CausaPerd.Value)
+		Alerta('No se puede omitir la causa del por qué perdimos')
+		.InfoPerdida.CausaPerd.SetFocus()
+		Return .F.
+	EndIf
+
+	* Validar que no se omita el comentario sobre que hacer para mejorar
+	If Empty(.InfoPerdida.ObsMejorar.Value)
+		Alerta('No se puede omitir el comentario sobre que hacer para mejorar')
+		.InfoPerdida.ObsMejorar.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Agregar la actividad
+	If Not .AgregarActiv()
+		Return .F.
+	EndIf
+	
+	* Actualizar la informacion
+	.ActualizaOport()
+	
+	* Localizar la oportunidad y actualiza la informacion
+	Select Oport
+	Replace	STATUS		With	4,;
+			PERDIDA		With	Date(),;
+			CAUSAPERD	With	Allt(.InfoPerdida.CausaPerd.Value),;
+			OBSMEJORAR	With	Allt(.InfoPerdida.ObsMejorar.Value)
+	
+	* Cerrar la ventana
+	.Release
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ6</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>container</class>
+		<classloc/>
+		<baseclass>container</baseclass>
+		<objname>infoesperar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 286
+Left = 71
+Width = 335
+Height = 190
+BackStyle = 0
+BorderWidth = 0
+TabIndex = 29
+ZOrderSet = 26
+Name = "infoesperar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ7</uniqueid>
+		<timestamp>1178370517</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1.infoesperar</parent>
+		<properties>Caption = "Volver a Llamar"
+Height = 16
+Left = 10
+Top = 7
+Width = 78
+TabIndex = 1
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD1</uniqueid>
+		<timestamp>1178371185</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>guardar</objname>
+		<parent>Formamsl1.infoesperar</parent>
+		<properties>Top = 31
+Left = 62
+Height = 25
+Width = 60
+Caption = "\&lt;Guardar"
+TabIndex = 3
+Name = "guardar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* InfoEsperar.Guardar
+*
+With ThisForm
+	
+	* Si no pasa las validaciones no continuar
+	If Not .ValidaInfo()
+		Return .F.
+	EndIf
+	
+	* Validar que no se omita la fecha de la siguiente llamada
+	If Empty(.InfoEsperar.SigLlamada.Value)
+		Alerta('No se puede omitir la fecha de la sig. llamada')
+		.InfoEsperar.SigLlamada.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Agregar la actividad
+	If Not .AgregarActiv()
+		Return .F.
+	EndIf
+	
+	* Actualizar la informacion
+	.ActualizaOport()
+	
+	* Localizar la oportunidad y actualiza la informacion
+	Select Oport
+	Replace	STATUS		With	2,;
+			SIGLLAMADA	With	.InfoEsperar.SigLlamada.Value
+	
+	* Cerrar la ventana
+	.Release
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0W2PD2</uniqueid>
+		<timestamp>1178370517</timestamp>
+		<class>leefecha</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>sigllamada</objname>
+		<parent>Formamsl1.infoesperar</parent>
+		<properties>Top = 5
+Left = 100
+Width = 98
+Height = 25
+TabIndex = 2
+Name = "sigllamada"
+Container1.Name = "Container1"
+fecha.Name = "fecha"
+Buscar.Name = "Buscar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0OHJRV</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>container</class>
+		<classloc/>
+		<baseclass>container</baseclass>
+		<objname>infocerrada</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 403
+Left = 15
+Width = 189
+Height = 66
+BackStyle = 0
+BorderWidth = 0
+TabIndex = 28
+ZOrderSet = 27
+Name = "infocerrada"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0OHJRW</uniqueid>
+		<timestamp>1178370517</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1.infocerrada</parent>
+		<properties>Caption = "Factura No."
+Height = 16
+Left = 32
+Top = 7
+Width = 58
+TabIndex = 1
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0OHJRX</uniqueid>
+		<timestamp>1178371185</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>guardar</objname>
+		<parent>Formamsl1.infocerrada</parent>
+		<properties>Top = 31
+Left = 62
+Height = 25
+Width = 60
+Caption = "\&lt;Guardar"
+TabIndex = 3
+Name = "guardar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* InfoCerrada.Guardar
+*
+With ThisForm
+	
+	* Si no pasa las validaciones no continuar
+	If Not .ValidaInfo()
+		Return .F.
+	EndIf
+	
+	* Validar que no se omita el folio de la factura
+	If Empty(.InfoCerrada.NumFact.Value)
+		Alerta('No se puede omitir el folio de la factura')
+		.InfoCerrada.NumFact.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Agregar la actividad
+	If Not .AgregarActiv()
+		Return .F.
+	EndIf
+	
+	* Actualizar la informacion
+	.ActualizaOport()
+	
+	* Localizar la oportunidad y actualiza la informacion
+	Select Oport
+	Replace	STATUS		With	3,;
+			GANADA		With	Date(),;
+			NUMFACT		With	.InfoCerrada.NumFact.Value
+	
+	* Cerrar la ventana
+	.Release
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0OHJRY</uniqueid>
+		<timestamp>1178370517</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>numfact</objname>
+		<parent>Formamsl1.infocerrada</parent>
+		<properties>Format = "!K"
+Height = 20
+Left = 100
+TabIndex = 2
+Top = 5
+Width = 80
+Name = "numfact"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+*
+* NumFact
+*
+* Al presionar doble clic, abrir la consulta individual de la factura
+*
+OpVentas(2,' F'+This.Value)
+
+ENDPROC
+PROCEDURE Valid
+*
+* NumFact
+*
+* Alinear el folio del numero de factura
+This.Value = PadL(Allt(This.Value),10)
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0XQCLL</uniqueid>
+		<timestamp>1178362022</timestamp>
+		<class>contacto</class>
+		<classloc>contacto.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oContacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 260
+Left = 475
+Height = 17
+Width = 28
+Name = "oContacto"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0XQCLM</uniqueid>
+		<timestamp>1178362022</timestamp>
+		<class>actividad</class>
+		<classloc>actividad.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oActividad</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 260
+Left = 515
+Height = 17
+Width = 28
+Name = "oActividad"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0X61SX</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>trabajando</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 288
+Left = 335
+Height = 40
+Width = 60
+Picture = ..\..\msllib60\modificar.bmp
+Caption = "\&lt;Trabajando"
+TabIndex = 25
+ZOrderSet = 30
+Name = "trabajando"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Trabajando
+*
+With ThisForm
+	
+	* Ocultar controles que solo se usan al hacer clic en Esperar, Cerrada o Perdida
+	.ActControles()
+	
+	* Si no pasa las validaciones no continuar
+	If Not .ValidaInfo()
+		Return .F.
+	EndIf
+	
+	* Agregar la actividad
+	If Not .AgregarActiv()
+		Return .F.
+	EndIf
+	
+	* Actualizar la informacion
+	.ActualizaOport()
+	
+	* Localizar la oportunidad y actualiza la informacion
+	Select Oport
+	Replace	STATUS		With	1
+	
+	* Cerrar la ventana
+	.Release
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0VLLQ6</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>esperar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 288
+Left = 260
+Height = 40
+Width = 60
+Picture = ..\..\msllib60\reclicla.bmp
+Caption = "\&lt;Esperar"
+TabIndex = 24
+ZOrderSet = 31
+Name = "esperar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Esperar
+*
+With ThisForm
+	
+	* Ocultar controles que solo se usan al hacer clic en Esperar, Cerrada o Perdida
+	.ActControles()
+	
+	.InfoEsperar.Visible = .T.
+	.InfoEsperar.SigLlamada.SetFocus()
+	.Height = 410
+	.AutoCenter = .T.
+	
+	This.Enabled = .F.
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0X61SZ</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>perdida</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 288
+Left = 485
+Height = 40
+Width = 60
+Picture = ..\..\msllib60\eliminar.bmp
+Caption = "\&lt;Perdida"
+TabIndex = 27
+ZOrderSet = 32
+Name = "perdida"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Perdida
+*
+With ThisForm
+	
+	* Ocultar controles que solo se usan al hacer clic en Esperar, Cerrada o Perdida
+	.ActControles()
+	
+	.InfoPerdida.Visible = .T.
+	.InfoPerdida.SetFocus()
+	.Height = 455
+	.AutoCenter = .T.
+	
+	This.Enabled = .F.
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0X61SY</uniqueid>
+		<timestamp>1178371000</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>cerrada</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 288
+Left = 410
+Height = 40
+Width = 60
+Picture = ..\..\msllib60\lock.bmp
+Caption = "Ce\&lt;rrada"
+TabIndex = 26
+ZOrderSet = 33
+Name = "cerrada"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Cerrada
+*
+With ThisForm
+	
+	* Ocultar controles que solo se usan al hacer clic en Esperar, Cerrada o Perdida
+	.ActControles()
+	
+	.InfoCerrada.Visible = .T.
+	.InfoCerrada.NumFact.SetFocus()
+	.Height = 410
+	.AutoCenter = .T.
+	
+	This.Enabled = .F.
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+Arial, 1, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

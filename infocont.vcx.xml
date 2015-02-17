@@ -1,0 +1,419 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Class</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JTBJ3</uniqueid>
+		<timestamp>1015637672</timestamp>
+		<class>container</class>
+		<classloc/>
+		<baseclass>container</baseclass>
+		<objname>infocont</objname>
+		<parent/>
+		<properties>Width = 285
+Height = 115
+BackStyle = 0
+BorderWidth = 0
+Name = "infocont"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>Class</reserved1>
+		<reserved2>10</reserved2>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6>Pixels</reserved6>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JUMYK</uniqueid>
+		<timestamp>896425076</timestamp>
+		<class>leernombre</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>LeeContacto</objname>
+		<parent>infocont</parent>
+		<properties>Top = 3
+Left = 4
+Width = 279
+Height = 25
+calias = Contactos
+ccampoclave = Contactos.NUMCONT
+ccamponombre = Contactos.NOMCONT
+cformabusqueda = BuscarContacto()
+nanchoclave = 6
+ctagclave = NumCont
+ctagnombre = NomCont
+Name = "LeeContacto"
+Container1.Top = 0
+Container1.Left = 50
+Container1.Width = 227
+Container1.Height = 21
+Container1.Name = "Container1"
+List1.Name = "List1"
+Nombre.Height = 17
+Nombre.Left = 52
+Nombre.Top = 2
+Nombre.Width = 209
+Nombre.Name = "Nombre"
+Leyenda1.Top = 2
+Leyenda1.Name = "Leyenda1"
+Clave.Left = 200
+Clave.Top = 4
+Clave.Name = "Clave"
+</properties>
+		<protected/>
+		<methods>PROCEDURE LostFocus
+DoDefault()
+
+* Limpiar los datos del contacto
+This.Parent.Empresa.Value = ''
+This.Parent.Telefono.Value = ''
+This.Parent.Mail.Value = ''
+This.Parent.LeeCliente.Clave.Value = ''
+This.Parent.LeeCliente.Nombre.Value = ''
+
+* Si el contacto existe, cargamos sus datos
+If Not Empty(This.clave.Value)
+	Select Contactos
+	This.Parent.Empresa.Value = Contactos.EMPRESA
+	This.Parent.Telefono.Value = Contactos.TELEFONO
+	This.Parent.Mail.Value = Contactos.MAIL
+	This.Parent.LeeCliente.Clave.Value = Contactos.NUMCLI
+	This.Parent.LeeCliente.Clave.Valid()
+EndIf
+
+ENDPROC
+PROCEDURE Nombre.KeyPress
+LPARAMETERS nkeycode,nshiftaltctrl
+DoDefault(nkeycode,nshiftaltctrl)
+If nKeyCode==-5
+	Do DoForm with 'CrmContactos',2,Recno('Contactos') in Crm
+	NoDefault
+Endif
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JUN16</uniqueid>
+		<timestamp>863455734</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>infocont</parent>
+		<properties>Caption = "\&lt;Empresa"
+Height = 16
+Left = 4
+Top = 28
+Width = 44
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JUN2W</uniqueid>
+		<timestamp>863455734</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>empresa</objname>
+		<parent>infocont</parent>
+		<properties>Height = 20
+Left = 53
+Top = 26
+Width = 230
+Name = "empresa"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JUN47</uniqueid>
+		<timestamp>863455734</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda2</objname>
+		<parent>infocont</parent>
+		<properties>Caption = "\&lt;Teléfono"
+Height = 16
+Left = 4
+Top = 50
+Width = 44
+Name = "Leyenda2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JUN5I</uniqueid>
+		<timestamp>863455734</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>telefono</objname>
+		<parent>infocont</parent>
+		<properties>Height = 20
+Left = 53
+Top = 48
+Width = 230
+Name = "telefono"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JUN6S</uniqueid>
+		<timestamp>863455734</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda3</objname>
+		<parent>infocont</parent>
+		<properties>Caption = "E-\&lt;Mail"
+Left = 18
+Top = 72
+Name = "Leyenda3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JUN8K</uniqueid>
+		<timestamp>863605622</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>mail</objname>
+		<parent>infocont</parent>
+		<properties>Height = 22
+Left = 53
+Top = 70
+Width = 230
+Name = "mail"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JUN9U</uniqueid>
+		<timestamp>863605622</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda4</objname>
+		<parent>infocont</parent>
+		<properties>Caption = "Clie\&lt;nte"
+Height = 16
+Left = 14
+Top = 96
+Width = 34
+Name = "Leyenda4"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O20JUNBL</uniqueid>
+		<timestamp>863605622</timestamp>
+		<class>leecve</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>LeeCliente</objname>
+		<parent>infocont</parent>
+		<properties>Top = 94
+Left = 53
+Width = 233
+Height = 20
+calias = Clientes
+cexprnombre = Clientes.NOMCLI
+cformabusqueda = ListClie
+nanchoclave = 5
+Name = "LeeCliente"
+Clave.Name = "Clave"
+Nombre.Height = 20
+Nombre.Left = 80
+Nombre.Top = 0
+Nombre.Width = 150
+Nombre.Name = "Nombre"
+Buscar.Name = "Buscar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname>infocont</objname>
+		<parent/>
+		<properties>Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

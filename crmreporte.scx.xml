@@ -1,0 +1,898 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_17Y0DE53P</uniqueid>
+		<timestamp>815215068</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_17Y0DE53Q</uniqueid>
+		<timestamp>949381134</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 190
+Width = 345
+DoCreate = .T.
+KeyPreview = .T.
+Name = "Formamsl1"
+Marco.Visible = .F.
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+* Manda llamar el metodo para actualizar los controles
+ThisForm.ActControles()
+
+ENDPROC
+PROCEDURE Init
+If Not OpenDbf('Contactos','NumCont') Or;
+	Not OpenDbf('CRM','ID') Or;
+	Not OpenDbf('Usuarios','NumUser') Or;
+	Not OpenDbf('Clientes','NumCli') Or;
+	Not OpenDbf('Ordenes','NumOrden') Or;
+	Not OpenDbf('Reportes') Or;
+	Not OpenDbf('Proy','NUMPROY') Or;
+	Not OpenDbf('Cia')
+	Return .F.
+EndIf
+
+With ThisForm
+	
+	* Localizar el reporte seleccionado del menu
+	Select Reportes
+	Locate For Upper(Alltrim(Prompt())) = Upper(Alltrim(Reportes.DESC))
+	If not Found()
+		Aviso('No se encuentra el reporte:'+Prompt())
+		Return .f.
+	Endif
+	.Caption = Allt(Reportes.DESC)
+	
+	.Fecha2.SetValue(Date())
+	
+EndWith
+
+ENDPROC
+PROCEDURE Unload
+* Borrar el Temporal
+DelAlias('Tempo')
+DoDefault()
+
+ENDPROC
+PROCEDURE actcontroles
+*
+* ActControles
+*
+* Actualiza los controles de la ventana
+*
+If Select('Reportes')&gt;0
+	With ThisForm
+		
+		* Activar el boton de imprimir si el reporte tiene un formato
+		.Imprimir.Enabled = Not Empty(Reportes.FORMATO)
+
+		* Activar el boton de hoja si el reporte tiene descripcion
+		.Hoja.Enabled =  Not Empty(Reportes.DESC)
+
+	EndWith
+
+EndIf
+
+ENDPROC
+PROCEDURE cargabase
+LParameters Forma
+*
+* CargaBase
+*
+* Hace la consulta del reporte
+*
+
+* Cambiar session
+m.ods = Set('Datasession')
+Set DataSession To Forma.DataSessionId
+
+If Not OpenDbf('Contactos','NumCont') Or;
+	Not OpenDbf('CRM','ID') Or;
+	Not OpenDbf('Usuarios','NumUser') Or;
+	Not OpenDbf('Clientes','NumCli') Or;
+	Not OpenDbf('Ordenes','NumOrden') Or;
+	Not OpenDbf('Reportes') Or;
+	Not OpenDbf('Proy','NUMPROY') Or;
+	Not OpenDbf('Cia')
+	Return .F.
+EndIf
+
+Wait Window 'Obteniendo Información ...' NoWait
+
+If Empty(Reportes.SQLAVANZA)
+	
+	* Orden definido en el reporte
+	m.Orden=Allt(Reportes.ORDEN)
+	
+	* Si el reporte no esta hecho con un SQL, hacer la consulta
+	m.RetVal = SqlMsl('Tempo',;
+		'Select '+;
+		IIF(Empty(m.Orden),'',m.Orden+' AS COL0,')+;
+		Reportes.EXPRS+;
+		'ID From CRM ' +;
+		'Left Join Contactos On Crm.NUMCONT == Contactos.NUMCONT '+;
+		'Left Join Ordenes On Crm.NUMORDEN == Ordenes.NUMORDEN '+;
+		'Where '+;
+		IIF(Empty(vNumUser),'', 'Crm.NUMUSER==m.Val1 And ') +;
+		IIF(Empty(vNumCli), '', 'Contactos.NUMCLI==m.Val2 And ')+;
+		IIF(Empty(vNumCont),'', 'Crm.NUMCONT==m.Val3 And ')+;
+		'Between(DTOS(FECHA),m.Val4,m.Val5) And '+;
+		IIF(Empty(vNumProy),'', 'Ordenes.NUMPROY==m.Val6 And ')+;
+		IIF(Empty(vNumOrden),'', 'Crm.NUMORDEN==m.Val7 And ')+;
+		IIF(Empty(Reportes.CONDICION),'','('+Alltrim(Reportes.CONDICION)+') ')+;
+		IIF(Empty(m.Orden),'','Order By COL0'),;
+		m.vNumUser,m.vNumCli,m.vNumCont,DToS(m.vFecha1),DToS(m.vFecha2),m.vNumProy,m.vNumOrden)
+		
+	* Poner las relaciones para el despliegue de nuevas columnas
+	If m.RetVal
+		
+		Select Contactos
+		Set Relation To NUMCLI Into Clientes
+		
+		Select CRM
+		Set Relation To	NUMCONT		Into Contactos,;
+						NUMUSER		Into Usuarios,;
+						NUMORDEN	Into Ordenes
+		
+		Select Tempo
+		Set Relation To ID Into CRM
+		
+	EndIf
+
+Else
+	
+	* Es un SQL Avanzado
+	* Hacer la consulta
+	m.Sql = ThisForm.FixSQL(Reportes.SQLAVANZA)
+	m.RetVal =SqlMsl('Tempo',m.Sql,m.vNumUser,m.vNumCli,m.vNumCont,DToS(m.vFecha1),DToS(m.vFecha2),m.vNumProy,m.vNumOrden)
+
+EndIf
+
+* Volver a la session original
+Set DataSession To m.ods
+Wait Clear
+Return
+
+ENDPROC
+PROCEDURE fixsql
+lParameter Cadena
+	*
+	* FixSQL
+	*
+	* Formatea las variables del SQL definido en el reporte
+	*
+	m.Cadena = StrTran(UPPER(m.Cadena),'VNUMUSER','Val1')
+	m.Cadena = StrTran(UPPER(m.Cadena),'VNUMCLI','Val2')
+	m.Cadena = StrTran(UPPER(m.Cadena),'VVNUMCONT','Val3')
+	m.Cadena = StrTran(UPPER(m.Cadena),'VFECHA1','Val4')
+	m.Cadena = StrTran(Upper(m.Cadena),'VFECHA2','Val5')
+	m.Cadena = StrTran(UPPER(m.Cadena),'VNUMPROY','Val6')
+	m.Cadena = StrTran(UPPER(m.Cadena),'VNUMORDEN','Val7')
+	
+	m.Cadena = StrTran(UPPER(m.Cadena),Chr(13)+Chr(10),Chr(32))
+	
+Return m.Cadena
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>*cargabase 
+*actcontroles 
+*fixsql 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1810LQZG2</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>textofecha</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>Fecha1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 20
+Left = 69
+TabIndex = 7
+Top = 82
+ZOrderSet = 1
+Name = "Fecha1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1810LQZG3</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>textofecha</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>Fecha2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 20
+Left = 165
+TabIndex = 9
+Top = 82
+ZOrderSet = 1
+Name = "Fecha2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1810LQZG4</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>Usuario</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+RowSourceType = 2
+RowSource = "Usuarios.NOMUSER"
+Height = 20
+Left = 69
+Style = 2
+TabIndex = 2
+Top = 17
+Width = 135
+Name = "Usuario"
+</properties>
+		<protected/>
+		<methods>PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* Delete
+If nKeyCode == 7
+	This.Value = ''
+Endif
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1EA0LBSJW</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>leernombre</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>Contacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 60
+Left = 20
+Width = 310
+Height = 21
+TabIndex = 5
+ZOrderSet = 4
+calias = Contactos
+ccampoclave = Contactos.NUMCONT
+ccamponombre = Contactos.NOMCONT
+cformabusqueda = BuscaContacto()
+ctagclave = NumCont
+ctagnombre = NomCont
+nanchoclave = 6
+lverclave = .T.
+Name = "Contacto"
+Container1.Name = "Container1"
+List1.Name = "List1"
+Nombre.Name = "Nombre"
+Leyenda1.Name = "Leyenda1"
+Clave.Name = "Clave"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1810LQZG5</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda10</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Usuario"
+Left = 25
+Top = 20
+TabIndex = 1
+Name = "Leyenda10"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1810LQZG6</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda7</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Fecha"
+Left = 32
+Top = 84
+TabIndex = 6
+Name = "Leyenda7"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1810LQZG7</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "a"
+Left = 155
+Top = 84
+TabIndex = 8
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_17Y0DE53P</uniqueid>
+		<timestamp>949380922</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>imprimir</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 152
+Left = 57
+Height = 20
+Width = 65
+Caption = "\&lt;Imprimir"
+TabIndex = 14
+Name = "imprimir"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Imprimir
+*
+* Imprime el reporte
+*
+With Thisform
+	* Crear las variables que se tendran disponibles en el reporte
+	If Empty(.Usuario.Value)
+		m.vNumUser = ''
+	Else
+		m.vNumUser = Usuarios.NUMUSER
+	EndIf
+	
+	m.vNumCli = .LeeCli.Clave.Value
+	
+	m.vNumCont = ''
+	If Not Empty(.Contacto.Nombre.Value)
+		m.vNumCont = .Contacto.Clave.Value
+	EndIf
+	
+	m.vFecha1 = .Fecha1.dValue
+	m.vFecha2 = .Fecha2.dValue
+	m.vNumProy = .LeeProyecto.Clave.Value
+	m.vNumOrden = .NumOrden.Value
+	
+	* Crea la consulta del reporte
+	.CargaBase(ThisForm)
+	
+	* Manda imprimir el reporte
+	Select Tempo
+	=SendRep(Reportes.FORMATO,Reportes.DEST)
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970RYTZY</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>leecve</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>LeeCli</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 38
+Left = 69
+Width = 264
+Height = 20
+TabIndex = 4
+calias = Clientes
+cexprnombre = Clientes.NOMCLI
+cformabusqueda = ListClie
+nanchoclave = 5
+Name = "LeeCli"
+Clave.Name = "Clave"
+Nombre.Height = 20
+Nombre.Left = 80
+Nombre.Top = 0
+Nombre.Width = 182
+Nombre.Name = "Nombre"
+Buscar.Name = "Buscar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970SG0T9</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Cliente"
+Left = 30
+Top = 40
+TabIndex = 3
+Name = "Leyenda2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1AE0PMS2B</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>closebutton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>cerrar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 152
+Left = 223
+Height = 20
+Width = 65
+TabIndex = 16
+Name = "cerrar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_17Y0DE53P</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda3</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Pro\&lt;yecto"
+Height = 16
+Left = 19
+Top = 105
+Width = 45
+TabIndex = 10
+Name = "Leyenda3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_17Y0DE53Q</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>leecve</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>LeeProyecto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 103
+Left = 69
+Width = 264
+Height = 20
+TabIndex = 11
+calias = Proy
+cexprnombre = Proy.NOMBRE
+Name = "LeeProyecto"
+Clave.Name = "Clave"
+Nombre.Height = 20
+Nombre.Left = 80
+Nombre.Top = 0
+Nombre.Width = 182
+Nombre.Name = "Nombre"
+Buscar.Name = "Buscar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_17Y0DE53P</uniqueid>
+		<timestamp>949380922</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>hoja</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 152
+Left = 139
+Height = 20
+Width = 65
+Caption = "\&lt;Hoja"
+TabIndex = 15
+Name = "hoja"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Hoja
+*
+* Envia el reporte a Excel
+*
+With Thisform
+	* Crear las variables que se tendran disponibles en el reporte
+	If Empty(.Usuario.Value)
+		m.vNumUser = ''
+	Else
+		m.vNumUser = Usuarios.NUMUSER
+	EndIf
+	
+	m.vNumCli = .LeeCli.Clave.Value
+	
+	m.vNumCont = ''
+	If Not Empty(.Contacto.Nombre.Value)
+		m.vNumCont = .Contacto.Clave.Value
+	EndIf
+	
+	m.vFecha1 = .Fecha1.dValue
+	m.vFecha2 = .Fecha2.dValue
+	m.vNumProy = .LeeProyecto.Clave.Value
+	m.vNumOrden = .NumOrden.Value
+	
+	* Crea la consulta del reporte
+	.CargaBase(ThisForm)
+	
+	* Carga la consulta en Hoja
+	DoForm('Consulta',ThisForm,"CargaBase",Recno('Reportes'))
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_17Y0DE53P</uniqueid>
+		<timestamp>949380741</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda4</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "# Orden"
+Height = 16
+Left = 23
+Top = 126
+Width = 41
+TabIndex = 12
+Name = "Leyenda4"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_17Y0DE53Q</uniqueid>
+		<timestamp>949381134</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>numorden</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 20
+Left = 69
+TabIndex = 13
+Top = 124
+Width = 69
+Name = "numorden"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Valid
+*
+* NumOrden
+*
+* Alinear el campo
+*
+This.Value = Padl(Allt(This.Value),10)
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

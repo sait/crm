@@ -1,0 +1,147 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970NTWDE</uniqueid>
+		<timestamp>818370788</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970NTWDF</uniqueid>
+		<timestamp>865757241</timestamp>
+		<class>catmsl</class>
+		<classloc>..\..\msllib60\catmsl.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Catmsl1</objname>
+		<parent/>
+		<properties>DoCreate = .T.
+Caption = "Catálogo de Contactos"
+calias = Contactos
+canchos = 40|200|150|100
+ccatname = Contactos
+cexprs = Contactos.NUMCONT|Contactos.NOMCONT|Contactos.EMPRESA|Contactos.TELEFONO
+ckey0 = NUMCONT
+ctitulos = Clave|Nombre|Empresa|Telefono
+formacatalogo = Contactos
+formabusqueda = BuscaContacto()
+Name = "Catmsl1"
+Marco.Name = "Marco"
+Pags.ErasePage = .T.
+Pags.Page1.Name = "Page1"
+Pags.Name = "Pags"
+Grid1.Column1.Header1.Name = "Header1"
+Grid1.Column1.Text1.Name = "Text1"
+Grid1.Column1.Name = "Column1"
+Grid1.Name = "Grid1"
+Agregar.Name = "Agregar"
+Modificar.Name = "Modificar"
+Eliminar.Name = "Eliminar"
+Excel.Name = "Excel"
+Buscar.Name = "Buscar"
+Imprimir.Name = "Imprimir"
+cerrar.Name = "cerrar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+If Not OpenDbf('Contactos','NumCont')
+	Return .f.
+EndIf
+
+* Muestra la informacion
+This.cAlias = 'Contactos'
+This.cCatName = 'CrmCatContactos'
+This.FormaCatalogo = 'CrmContactos'
+This.FormaBusqueda = 'BuscaCont'
+This.cAnchos = '50|180|180|100'
+This.cTitulos = 'Clave|Nombre|Empresa|Telefono'
+This.cExprs = 'Contactos.NUMCONT|Contactos.NOMCONT|Contactos.EMPRESA|Contactos.TELEFONO'
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

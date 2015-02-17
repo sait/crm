@@ -1,0 +1,702 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10JJWD</uniqueid>
+		<timestamp>1177585760</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10JJWE</uniqueid>
+		<timestamp>1178359122</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 245
+Width = 680
+DoCreate = .T.
+Caption = "Crear Oportunidad"
+WindowType = 1
+Name = "Formamsl1"
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+If Not OpenDbf('Oport','NUMOPORT') Or;
+	Not OpenDbf('Contactos','NUMCONT') Or;
+	Not OpenDbf('Crm','ID') Or;
+	Not OpenDbf('Clientes','NUMCLI')
+	Return .F.
+EndIf
+
+* Cargar los tipos de oportunidades
+ThisForm.TiposdeOport()
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nkeycode,nshiftaltctrl
+* No cerrar la ventana al presionar la tecla [ESC]
+If nKeyCode == 27
+	NoDefault
+	Return
+EndIf
+
+ENDPROC
+PROCEDURE tiposdeoport
+*
+* TiposdeOport
+*
+* Cargar los tipos de oportunidades
+*
+With ThisForm
+	Local i,cTipos,cTipoOport
+	
+	* Obtener los tipos de oportunidades desde el Config.msl
+	cTipos = GetMsl('CrmTiposOport')
+	cTipoOport = ''
+	
+	* Crear el temporal donde se van a almacenar los tipos
+	Create Cursor TipoOpor(TIPO C(15))
+	Index On Upper(TIPO) Tag Tipo
+	
+	* Agregarlos al temporal
+	i = 1
+	Do While .T.
+		cTipoOport = SubLin(cTipos,i)
+		If Empty(cTipoOport)
+			Exit
+		Endif
+		Insert Into TipoOpor Values (cTipoOport)
+		i=i+1
+	EndDo
+	
+	.Tipo.RowSourceType = 6
+	.Tipo.RowSource = 'TipoOpor.TIPO'
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>*tiposdeoport 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10T3QP</uniqueid>
+		<timestamp>1178305551</timestamp>
+		<class>infocont</class>
+		<classloc>infocont.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>Infocont</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 13
+Left = 17
+Width = 290
+Height = 117
+TabIndex = 1
+Name = "Infocont"
+LeeContacto.Container1.Name = "Container1"
+LeeContacto.List1.Name = "List1"
+LeeContacto.Nombre.Name = "Nombre"
+LeeContacto.Leyenda1.Name = "Leyenda1"
+LeeContacto.Clave.Name = "Clave"
+LeeContacto.Name = "LeeContacto"
+Leyenda1.Name = "Leyenda1"
+empresa.Name = "empresa"
+Leyenda2.Name = "Leyenda2"
+telefono.Name = "telefono"
+Leyenda3.Name = "Leyenda3"
+mail.Name = "mail"
+Leyenda4.Name = "Leyenda4"
+LeeCliente.Clave.Name = "Clave"
+LeeCliente.Nombre.Name = "Nombre"
+LeeCliente.Buscar.Name = "Buscar"
+LeeCliente.Name = "LeeCliente"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10JJWD</uniqueid>
+		<timestamp>1178305551</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Asunto"
+Height = 16
+Left = 313
+Top = 45
+Width = 37
+TabIndex = 4
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10JJWE</uniqueid>
+		<timestamp>1178305551</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>asunto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 355
+MaxLength = 50
+TabIndex = 5
+Top = 43
+Width = 308
+Name = "asunto"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10JJWD</uniqueid>
+		<timestamp>1178305551</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Observaciones"
+Height = 16
+Left = 313
+Top = 65
+Width = 76
+TabIndex = 6
+Name = "Leyenda2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10T3QU</uniqueid>
+		<timestamp>1178305666</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>crear</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 188
+Left = 244
+Height = 40
+Width = 60
+Picture = ..\..\msllib60\agregar.bmp
+Caption = "C\&lt;rear"
+TabIndex = 10
+Name = "crear"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Crear
+*
+* Crea el registro de la oportunidad
+*
+With ThisForm
+	
+	* Validar que no se omita el asunto
+	If Empty(.Asunto.Value)
+		Alerta('No se puede omitir el asunto')
+		.Asunto.SetFocus()
+		Return .F.
+	EndIf
+	
+	* Validar que no se omitan las observaciones
+	If Empty(.Obs.Value)
+		Alerta('No se puede omitir la observación')
+		.Obs.SetFocus()
+		Return .F.
+	EndIf
+	
+	With ThisForm.oContacto
+		* Llenar la informacion del contacto
+		.NumCont = ThisForm.InfoCont.LeeContacto.Clave.Value
+		.NomCont = ThisForm.InfoCont.LeeContacto.Nombre.Value
+		.Empresa = ThisForm.InfoCont.Empresa.Value
+		.Telefono = ThisForm.InfoCont.Telefono.Value
+		.Mail = ThisForm.InfoCont.Mail.Value
+		.NumCli = ThisForm.InfoCont.LeeCliente.Clave.Value
+		
+		* Manda llamar el metodo para validar la informacion para grabar el contacto
+		If Not .ValidAgregar()
+			Alerta(.cError)
+			* Manda llamar metodo para enviar el focus al control especifico
+			ThisForm.InfoCont.SetFocus()
+			Return .F.
+		EndIf
+		
+	EndWith
+	
+	With ThisForm.oActividad
+		* Llenar la informacion de la actividad
+		.Id = ''
+		.Tipo = 'Llame'
+		.Fecha = DateTime()
+		.FechaFin = DateTime()
+		.Obs = ThisForm.Obs.Value
+		.NumUser = m.NumUser
+		.NumUserGen = m.NumUser
+		.Actividad = .T.
+		.NumCotiza = ''
+		.StatusCot = 0
+		.Refer = ''
+		.NumOrden = ''
+		.OrdenPost = ''
+		
+		* Manda llamar el metodo para validar la informacion para grabar la actividad
+		If Not .ValidAgregar()
+			Alerta(.cError)
+			* Manda llamar metodo para enviar el focus al control especifico
+			ThisForm.LeeObs.SetFocus()
+			Return .F.
+		EndIf
+	EndWith
+	
+	* Grabar al contacto
+	If Not .oContacto.Agregar()
+		Alerta(.oContacto.cError)
+		Return .F.
+	EndIf
+	
+	* Asigna el numero de contacto despues de haberlo grabado
+	.oActividad.NumCont = .oContacto.NumCont
+	
+	* Agregar una nueva actividad
+	If Not .oActividad.Agregar()
+		Alerta(.oActividad.cError)
+		Return .F.
+	EndIf
+	
+	* Agregar la oportunidad
+	Select Oport
+	Go Bott
+	cNumOport = Padl(Allt(SigDoc(NUMOPORT)),10)
+	Append Blank
+	Replace	NUMOPORT	With	cNumOport,;
+			NUMCLI		With	.oContacto.NumCli,;
+			NUMCONT		With	.oContacto.NumCont,;
+			TIPO		With	Allt(.Tipo.Value),;
+			ASUNTO		With	Allt(.Asunto.Value),;
+			OBS			With	Allt(.Obs.Value),;
+			CONOCIOEN	With	Allt(.ConocioEn.Value),;
+			STATUS		With	0,;
+			CREADA		With	Date()
+	
+	* Cerrar la ventana
+	.Release
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10T3QV</uniqueid>
+		<timestamp>1178305551</timestamp>
+		<class>closebutton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>cerrar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 188
+Left = 376
+Height = 40
+Width = 60
+Picture = ..\..\msllib60\door2.bmp
+TabIndex = 11
+Name = "cerrar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10VRV8</uniqueid>
+		<timestamp>1177636148</timestamp>
+		<class>contacto</class>
+		<classloc>contacto.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oContacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 145
+Left = 15
+Height = 17
+Width = 28
+Name = "oContacto"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49O0ZGCV8</uniqueid>
+		<timestamp>1178306985</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>tipo</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 21
+Left = 355
+Style = 2
+TabIndex = 3
+ToolTipText = "Tipo de oportunidad"
+Top = 16
+Width = 120
+ZOrderSet = 8
+Name = "tipo"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10VRV9</uniqueid>
+		<timestamp>1177636148</timestamp>
+		<class>actividad</class>
+		<classloc>actividad.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oActividad</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 145
+Left = 55
+Height = 17
+Width = 28
+Name = "oActividad"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D10JJWE</uniqueid>
+		<timestamp>1178305551</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>obs</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 50
+Left = 313
+TabIndex = 7
+Top = 82
+Width = 350
+Name = "obs"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49E0KS04K</uniqueid>
+		<timestamp>1178305551</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda3</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "¿Cómo nos conoció?"
+Height = 16
+Left = 313
+Top = 134
+Width = 103
+TabIndex = 8
+Name = "Leyenda3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49I0VU7I7</uniqueid>
+		<timestamp>1178305551</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>conocioen</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 313
+TabIndex = 9
+Top = 151
+Width = 350
+Name = "conocioen"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49O0ZGCV9</uniqueid>
+		<timestamp>1178305551</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda4</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Tipo"
+Height = 16
+Left = 328
+Top = 20
+Width = 22
+TabIndex = 2
+Name = "Leyenda4"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

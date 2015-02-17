@@ -1,0 +1,2528 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLT</uniqueid>
+		<timestamp>1177581116</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLU</uniqueid>
+		<timestamp>1178369547</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 450
+Width = 780
+DoCreate = .T.
+Caption = "Oportunidades"
+noporttotreg = 0
+Name = "Formamsl1"
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Activate
+*
+* Activade
+*
+* Cargar las oportunidades que cumplan con las restricciones
+*
+DoDefault()
+With ThisForm
+	
+	* Evaluar si se han agregado mas oportunidades
+	If Reccount('Oport') &lt;&gt; .nOportTotReg
+		* Consultar oportunidades
+		.Consultar.Click()
+	Else
+		
+		* Actualizar la informacion del temporal
+		Select Temp
+		nRecno = Recno()
+		Scan
+			If Seek(Temp.NUMOPORT,'Oport')
+				
+				* Obtener el status
+				cStatus = ''
+				Do Case
+					Case Oport.STATUS == 0
+						cStatus = 'Nueva'
+					Case Oport.STATUS == 1
+						cStatus = 'Trabajando'
+					Case Oport.STATUS == 2
+						cStatus = 'Esperando'
+					Case Oport.STATUS == 3
+						cStatus = 'Ganada'
+					Case Oport.STATUS == 4
+						cStatus = 'Perdida'
+				EndCase
+				
+				* Actualizar la informacion del registro
+				Select Temp
+				Replace Temp.RESUMEN	With	Allt(Oport.ASUNTO),;
+						Temp.STATUS		With	cStatus,;
+						Temp.VALOR		With	Oport.IMPORTE
+				
+			EndIf
+			Select Temp
+		EndScan
+		
+		* Irme al registro activo
+		If Between(nRecno,1,Reccount())
+			Goto nRecno
+		EndIf
+		
+		* Actualizar el grid
+		.Grid1.Refresh()
+	EndIf
+	
+EndWith
+
+ENDPROC
+PROCEDURE Init
+If Not OpenDbf('Oport','NUMOPORT') Or;
+	Not OpenDbf('Contactos','NUMCONT') Or;
+	Not OpenDbf('Crm','ID') Or;
+	Not OpenDbf('Usuarios','NUMUSER') Or;
+	Not OpenDbf('Cia')
+	Return .F.
+EndIf
+
+With ThisForm
+	
+	* Cargar los tipos de oportunidades
+	.TiposdeOport()
+	
+	* Cargar los tipos de probabilidad de cierre
+	.TiposdeProb()
+	
+	* Mostrar los usuarios
+	With ThisForm.Usuario
+		.RowSourceType = 6
+		.RowSource = 'Usuarios.NOMUSER'
+		
+		* Mostrar el usuario actual
+		Select Usuarios
+		Seek(m.NumUser)
+		.Value = Usuarios.NOMUSER
+		.InteractiveChange()
+	EndWith
+	
+	* Cargar los status
+	With ThisForm.Status
+		.AddItem('Todas')
+		.AddItem('Nuevas')
+		.AddItem('Trabajando')
+		.AddItem('Esperando')
+		.AddItem('Ganadas')
+		.AddItem('Perdidas')
+		
+		.Value = 1
+	EndWith
+	
+	* Cargar los filtros
+	With ThisForm.Filtro
+		.AddItem('Por Trabajar')
+		.AddItem('Creadas del')
+		.AddItem('Ganadas del')
+		.AddItem('Perdidas del')
+		.AddItem('Contactar del')
+		
+		.Value = 1
+	EndWith
+	
+	* Mostrar la fecha final
+	.FechaFin.SetValue(Date())
+	
+	* Mostrar las lineas de los grid del color del formulario
+	.Grid1.GridLineColor = .BackColor
+	.Grid2.GridLineColor = .BackColor
+	.Grid3.GridLineColor = .BackColor
+	
+	* Cargar las oportunidades
+	.Consultar.Click()
+	
+EndWith	
+
+ENDPROC
+PROCEDURE Unload
+*
+* UnLoad
+*
+* Borrar los temporales
+DelAlias('Temp')
+DelAlias('TempOpor')
+DelAlias('TempProb')
+DelAlias('TipoOpor')
+DelAlias('TipoProb')
+
+ENDPROC
+PROCEDURE tiposdeoport
+*
+* TiposdeOport
+*
+* Cargar los tipos de oportunidades
+*
+With ThisForm
+	Local i,cTipos,cTipoOport
+	
+	* Obtener los tipos de oportunidades desde el Config.msl
+	cTipos = GetMsl('CrmTiposOport')
+	cTipoOport = ''
+	
+	* Crear el temporal donde se van a almacenar los tipos
+	Create Cursor TipoOpor(TIPO C(15))
+	Index On Upper(TIPO) Tag Tipo
+	
+	* Agregarlos al temporal
+	i = 1
+	Do While .T.
+		cTipoOport = SubLin(cTipos,i)
+		If Empty(cTipoOport)
+			Exit
+		Endif
+		Insert Into TipoOpor Values (cTipoOport)
+		i=i+1
+	EndDo
+	
+	.Tipo.RowSourceType = 6
+	.Tipo.RowSource = 'TipoOpor.TIPO'
+	
+EndWith
+
+ENDPROC
+PROCEDURE tiposdeprob
+*
+* TiposdeProb
+*
+* Cargar los tipos de probabilidad de cierre
+*
+With ThisForm
+	Local i,cTipos,cTipoProb
+	
+	* Obtener los tipos de probabilidad de cierre desde el Config.msl
+	cTipos = GetMsl('CrmProbCierre')
+	cTipoProb = ''
+	
+	* Crear el temporal donde se van a almacenar los tipos
+	Create Cursor TipoProb(TIPO C(15))
+	Index On Upper(TIPO) Tag Tipo
+	
+	* Agregarlos al temporal
+	i = 1
+	Do While .T.
+		cTipoProb = SubLin(cTipos,i)
+		If Empty(cTipoProb)
+			Exit
+		Endif
+		Insert Into TipoProb Values (cTipoProb)
+		i=i+1
+	EndDo
+	
+	.ProbCierre.RowSourceType = 6
+	.ProbCierre.RowSource = 'TipoProb.TIPO'
+	
+EndWith
+
+ENDPROC
+PROCEDURE totoport
+*
+* TotOport
+*
+* Totalizar por tipos de oportunidad
+*
+With ThisForm
+	
+	* Obtener las oportunidades por tipo de oportunidad
+	Select TIPO, Count(TIPO) As Cant, Sum(VALOR) As Valor From Temp Group By 1 Order By 3 Into Cursor TempOpor
+	
+	* Obtener los totales
+	Select TempOpor
+	Sum CANT,VALOR	To	.CantOport.Value,.ValorOport.Value
+	
+	* Muestra los datos del temporal
+	.LockScreen = .T.
+	With ThisForm.Grid2
+		.RecordSourceType = 1
+		.RecordSource = 'TempOpor'
+		
+		.Column1.ControlSource = 'Allt(TempOpor.TIPO)'
+		.Column2.ControlSource = 'TempOpor.CANT'
+		.Column3.ControlSource = 'TempOpor.VALOR'
+		
+		* Irme al inicio del temporal
+		Select TempOpor
+		Go Top
+		.Refresh()
+		
+	EndWith
+	.LockScreen = .F.
+	
+EndWith
+
+ENDPROC
+PROCEDURE totprobcierre
+*
+* TotProbCierre
+*
+* Totalizar por probabilidad de cierre
+*
+With ThisForm
+	
+	* Obtener las oportunidades por probabilidad de cierre
+	Select PROBCIERRE, Count(PROBCIERRE) As Cant, Sum(VALOR) As Valor From Temp Group By PROBCIERRE Order By 3 Into Cursor TempProb
+	
+	* Obtener los totales
+	Select TempProb
+	Sum CANT,VALOR	To	.CantProbCierre.Value,.ValorProbCierre.Value
+	
+	* Muestra los datos del temporal
+	.LockScreen = .T.
+	With ThisForm.Grid3
+		.RecordSourceType = 1
+		.RecordSource = 'TempProb'
+		
+		.Column1.ControlSource = 'Allt(TempProb.PROBCIERRE)'
+		.Column2.ControlSource = 'TempProb.CANT'
+		.Column3.ControlSource = 'TempProb.VALOR'
+		
+		* Irme al inicio del temporal
+		Select TempProb
+		Go Top
+		.Refresh()
+		
+	EndWith
+	.LockScreen = .F.
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>cnumuser
+activerecno
+noporttotreg
+*tiposdeprob 
+*tiposdeoport 
+*totoport 
+*totprobcierre 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLT</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>usuario</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 20
+Left = 15
+Style = 2
+TabIndex = 1
+ToolTipText = "Agente"
+Top = 17
+Width = 150
+Name = "usuario"
+</properties>
+		<protected/>
+		<methods>PROCEDURE InteractiveChange
+*
+* Usuario
+*
+* Almacena en una propiedad de la forma el numero de usuario
+ThisForm.cNumUser = Usuarios.NUMUSER
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* Borrar el usuario al presionar [Del]
+If nKeyCode==7
+	This.Value = ''
+	ThisForm.cNumUser = ''
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLT</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>status</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 20
+Left = 166
+Style = 2
+TabIndex = 2
+ToolTipText = "Status"
+Top = 17
+Width = 90
+Name = "status"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VYEBI</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>filtro</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 20
+Left = 257
+Style = 2
+TabIndex = 3
+ToolTipText = "Filtro"
+Top = 17
+Width = 90
+Name = "filtro"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLT</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>leefecha</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>fechaini</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 17
+Left = 348
+Width = 95
+Height = 21
+TabIndex = 4
+Name = "fechaini"
+Container1.Name = "Container1"
+Fecha.Name = "Fecha"
+Buscar.Name = "Buscar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VYEBJ</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "al"
+Height = 16
+Left = 444
+Top = 19
+Width = 10
+TabIndex = 5
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VYEBK</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>leefecha</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>fechafin</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 17
+Left = 455
+Width = 95
+Height = 21
+TabIndex = 6
+Name = "fechafin"
+Container1.Name = "Container1"
+Fecha.Name = "Fecha"
+Buscar.Name = "Buscar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJT3</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>leernombre</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>LeeContacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 40
+Left = 271
+Width = 279
+Height = 23
+TabIndex = 9
+calias = Contactos
+ccampoclave = Contactos.NUMCONT
+ccamponombre = Contactos.NOMCONT
+cformabusqueda = BuscarContacto()
+nanchoclave = 6
+ctagclave = NumCont
+ctagnombre = NomCont
+Name = "LeeContacto"
+Container1.Top = 0
+Container1.Left = 50
+Container1.Width = 227
+Container1.Height = 21
+Container1.Name = "Container1"
+List1.Name = "List1"
+Nombre.Height = 17
+Nombre.Left = 52
+Nombre.Top = 2
+Nombre.Width = 209
+Nombre.Name = "Nombre"
+Leyenda1.Top = 2
+Leyenda1.Name = "Leyenda1"
+Clave.Left = 200
+Clave.Top = 4
+Clave.Name = "Clave"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0V0RCY</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>probcierre</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 21
+Left = 146
+Style = 2
+TabIndex = 8
+ToolTipText = "Probabilidad de Cierre"
+Top = 40
+Width = 110
+ZOrderSet = 8
+Name = "probcierre"
+</properties>
+		<protected/>
+		<methods>PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* Borrar el tipo de probabilidad de cierre al presionar [Del]
+If nKeyCode==7
+	This.Value = ''
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0V0RCZ</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>tipo</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Height = 21
+Left = 15
+Style = 2
+TabIndex = 7
+ToolTipText = "Tipo de oportunidad"
+Top = 40
+Width = 110
+ZOrderSet = 9
+Name = "tipo"
+</properties>
+		<protected/>
+		<methods>PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+* Borrar el tipo de oportunidad al presionar [Del]
+If nKeyCode==7
+	This.Value = ''
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJT4</uniqueid>
+		<timestamp>1178369547</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>consultar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 16
+Left = 553
+Height = 40
+Width = 60
+Picture = ..\..\msllib60\pantalla.bmp
+Caption = "C\&lt;onsultar"
+TabIndex = 10
+Name = "consultar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Consultar
+*
+* Realiza la consulta de oportunidades segun las restricciones
+*
+With ThisForm
+	
+	* Deshabilitar el boton de excel
+	.Excel.Enabled = .F.
+	
+	* Quitar los temporal de los grid
+	.Grid1.RecordSource = ''
+	.Grid2.RecordSource = ''
+	.Grid3.RecordSource = ''
+	
+	* Borrar los temporales
+	DelAlias('Temp')
+	DelAlias('TempOpor')
+	DelAlias('TempProb')
+	
+	* Inicializar variables
+	Do Case
+		Case .Status.Value == 2
+			* Nuevas
+			nStatus = 0
+		Case .Status.Value == 3
+			* Trabajando
+			nStatus = 1
+		Case .Status.Value == 4
+			* Esperando
+			nStatus = 2
+		Case .Status.Value == 5
+			* Ganadas
+			nStatus = 3
+		Case .Status.Value == 6
+			* Perdidas
+			nStatus = 4
+		OtherWise
+			* Todas
+			nStatus = 5
+	EndCase
+	nFiltro = .Filtro.Value
+	dFechaIni = .FechaIni.Value
+	dFechaFin = .FechaFin.Value
+	cTipo = Allt(.Tipo.Value)
+	cProbCierre = Allt(.ProbCierre.Value)
+	
+	* Localizar al contacto
+	cNumCont = ''
+	If Not Empty(.LeeContacto.Nombre.Value)
+		cNumCont = .LeeContacto.Clave.Value
+	EndIf
+	
+	* Formar la consulta
+	cSql = 'Select Oport.NUMOPORT As NumOport, Oport.CREADA As Creada, Oport.TIPO As Tipo, Contactos.EMPRESA As Empresa, '+;
+				'Contactos.NOMCONT As Contacto, Oport.ASUNTO As Resumen, '+;
+				'IIF(Oport.STATUS==0,"Nueva     ",IIF(Oport.STATUS==1,"Trabajando",IIF(Oport.STATUS==2,"Esperando ",IIF(Oport.STATUS==3,"Ganada    ","Perdida   ")))) As Status, '+;
+				'Oport.IMPORTE As Valor, NVL(Usuarios.NOMUSER,Space(50)) As Agente, Oport.PROBCIERRE As ProbCierre '+;
+				'From Oport '+;
+				'Left Join Contactos On Oport.NUMCONT == Contactos.NUMCONT '+;
+				'Left Join Usuarios On Oport.NUMUSER == Usuarios.NUMUSER '+;
+				'Order By 1 '+;
+				'Where '+;
+				IIF(Empty(.cNumUser), '.T.', '(Empty(Oport.NUMUSER) Or Oport.NUMUSER == m.Val1)')+' And '+;
+				IIF(nStatus == 5, '.T.', 'Oport.STATUS == m.Val2')+' And '+;
+				IIF(Empty(cTipo), '.T.', 'Allt(Oport.TIPO) == m.Val3')+' And '+;
+				IIF(Empty(cProbCierre), '.T.', 'Allt(Oport.PROBCIERRE) == m.Val4')+' And '+;
+				IIF(Empty(cNumCont), '.T.', 'Oport.NUMCONT == m.Val5')+' And '
+	
+	Do Case
+		Case nFiltro == 1
+			* Por Trabajar
+			cSql = cSql + '(Oport.STATUS == 0 Or Oport.STATUS == 1 Or (Oport.STATUS == 2 And Oport.SIGLLAMADA &lt;= m.Val7))'
+			
+		Case nFiltro == 2
+			* Creadas del ...
+			cSql = cSql + 'Between(Oport.CREADA,m.Val6,m.Val7)'
+			
+		Case nFiltro == 3
+			* Ganadas del ...
+			cSql = cSql + 'Between(Oport.GANADA,m.Val6,m.Val7)'
+			
+		Case nFiltro == 4
+			* Perdidas del ...
+			cSql = cSql + 'Between(Oport.PERDIDA,m.Val6,m.Val7)'
+			
+		Case nFiltro == 5
+			* Contactar del ...
+			cSql = cSql + 'Between(Oport.SIGLLAMADA,m.Val6,m.Val7)'
+			
+	EndCase
+	
+	* Hacer la consulta
+	If Not SqlMsl('Temp',cSql,.cNumUser,nStatus,cTipo,cProbCierre,cNumCont,dFechaIni,dFechaFin)
+Return
+	EndIf
+	
+	* Muestra los datos del temporal
+	.LockScreen = .T.
+	With ThisForm.Grid1
+		.RecordSourceType = 1
+		.RecordSource = 'Temp'
+		
+		.Column1.ControlSource = 'Allt(Temp.NUMOPORT)'
+		.Column2.ControlSource = 'Allt(Temp.EMPRESA)'
+		.Column3.ControlSource = 'Allt(Temp.CONTACTO)'
+		.Column4.ControlSource = 'Allt(Temp.RESUMEN)'
+		.Column5.ControlSource = 'Temp.STATUS'
+		.Column6.ControlSource = 'Temp.VALOR'
+		.Column7.ControlSource = 'Allt(Temp.AGENTE)'
+		.Column8.ControlSource = 'MexDate3(Temp.CREADA)'
+		.Column9.ControlSource = 'Allt(Temp.TIPO)'
+		
+		* Irme al inicio del temporal
+		Select Temp
+		Go Top
+		
+		* Poner el cursor en el grid
+		.SetFocus()
+		
+	EndWith
+	.LockScreen = .F.
+	
+	* Almacenar en una propiedad de la forma el total de registros de Oport.dbf
+	.nOportTotReg = Reccount('Oport')
+	
+	* Mostrar aviso si no se encontro informacion
+	If Reccount('Temp') == 0
+		Alerta('No se encontró información')
+	Else
+		* Habilitar el boton de excel
+		.Excel.Enabled = .T.
+		
+		* Totalizar por tipos de oportunidad
+		.TotOport()
+		
+		* Totalizar por probabilidad de cierre
+		.TotProbCierre()
+		
+	EndIf
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLT</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>nueva</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 16
+Left = 613
+Height = 40
+Width = 50
+Picture = ..\..\msllib60\agregar.bmp
+Caption = "\&lt;Nueva"
+TabIndex = 12
+Name = "nueva"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Nueva
+*
+* Agregar una nueva oportunidad
+*
+Do DoModal With 'CrmCrearOport' In Crm
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJT6</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>excel</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 16
+Left = 728
+Height = 40
+Width = 40
+Picture = ..\..\msllib60\excel.bmp
+Caption = "E\&lt;xcel"
+TabIndex = 14
+Name = "excel"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Excel
+*
+* Envia a Excel la consulta
+cNomCia = Allt(Cia.NOMCIA)
+cTitulo = ThisForm.Caption
+cColumnas = 'Id^Fecha^Tipo^Empresa^Contacto^Resúmen^Status^Valor^Agente^Prob. Cierre'
+cMascaras = 'C^D^C^C^C^C^999,999,999.99^C^C'
+OpenExcel(cNomCia,cTitulo,cColumnas,cMascaras)
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJT7</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>grid</class>
+		<classloc/>
+		<baseclass>grid</baseclass>
+		<objname>Grid1</objname>
+		<parent>Formamsl1</parent>
+		<properties>ColumnCount = 9
+FontSize = 8
+DeleteMark = .F.
+GridLines = 2
+Height = 230
+Left = 11
+ReadOnly = .T.
+RecordMark = .F.
+RowHeight = 17
+ScrollBars = 2
+TabIndex = 11
+Top = 65
+Width = 758
+Name = "Grid1"
+Column1.FontSize = 8
+Column1.Width = 50
+Column1.ReadOnly = .T.
+Column1.Name = "Column1"
+Column2.FontSize = 8
+Column2.ColumnOrder = 4
+Column2.Width = 110
+Column2.ReadOnly = .T.
+Column2.Name = "Column2"
+Column3.FontSize = 8
+Column3.ColumnOrder = 5
+Column3.Width = 110
+Column3.ReadOnly = .T.
+Column3.Name = "Column3"
+Column4.FontSize = 8
+Column4.ColumnOrder = 6
+Column4.Width = 150
+Column4.ReadOnly = .T.
+Column4.Name = "Column4"
+Column5.FontSize = 8
+Column5.ColumnOrder = 7
+Column5.Width = 60
+Column5.ReadOnly = .T.
+Column5.Name = "Column5"
+Column6.FontSize = 8
+Column6.ColumnOrder = 8
+Column6.Width = 64
+Column6.ReadOnly = .T.
+Column6.InputMask = "999,999,999.99"
+Column6.Name = "Column6"
+Column7.FontSize = 8
+Column7.ColumnOrder = 9
+Column7.Width = 70
+Column7.ReadOnly = .T.
+Column7.Name = "Column7"
+Column8.FontSize = 8
+Column8.ColumnOrder = 2
+Column8.Width = 55
+Column8.ReadOnly = .T.
+Column8.Name = "Column8"
+Column9.FontSize = 8
+Column9.ColumnOrder = 3
+Column9.Width = 60
+Column9.ReadOnly = .T.
+Column9.Name = "Column9"
+</properties>
+		<protected/>
+		<methods>PROCEDURE AfterRowColChange
+LPARAMETERS nColIndex
+* Guardar en una propiedad de la forma el registro activo
+Select Temp
+ThisForm.ActiveRecno = Recno()
+ThisForm.Grid1.Refresh()
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJT8</uniqueid>
+		<timestamp>1177582020</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column1</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Id"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJT9</uniqueid>
+		<timestamp>1177910923</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column1</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+*
+* Temp.NUMOPORT
+*
+* Dar seguimiento al dar doble clic
+ThisForm.Seguimiento.Click()
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+*
+* Temp.NUMOPORT
+*
+* Dar seguimiento al dar presionar [Enter]
+If nKeyCode == 13
+	ThisForm.Seguimiento.Click()
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTA</uniqueid>
+		<timestamp>1177582020</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column2</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Empresa"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTB</uniqueid>
+		<timestamp>1177910923</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column2</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+*
+* Temp.EMPRESA
+*
+* Dar seguimiento al dar doble clic
+ThisForm.Seguimiento.Click()
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+*
+* Temp.EMPRESA
+*
+* Dar seguimiento al dar presionar [Enter]
+If nKeyCode == 13
+	ThisForm.Seguimiento.Click()
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTC</uniqueid>
+		<timestamp>1177582020</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column3</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Contacto"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTD</uniqueid>
+		<timestamp>1177910923</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column3</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+*
+* Temp.CONTACTO
+*
+* Dar seguimiento al dar doble clic
+ThisForm.Seguimiento.Click()
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+*
+* Temp.CONTACTO
+*
+* Dar seguimiento al dar presionar [Enter]
+If nKeyCode == 13
+	ThisForm.Seguimiento.Click()
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTE</uniqueid>
+		<timestamp>1177582020</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column4</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Resúmen"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTF</uniqueid>
+		<timestamp>1177910923</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column4</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+*
+* Temp.RESUMEN
+*
+* Dar seguimiento al dar doble clic
+ThisForm.Seguimiento.Click()
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+*
+* Temp.RESUMEN
+*
+* Dar seguimiento al dar presionar [Enter]
+If nKeyCode == 13
+	ThisForm.Seguimiento.Click()
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTG</uniqueid>
+		<timestamp>1177582020</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column5</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Status"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTH</uniqueid>
+		<timestamp>1177910923</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column5</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+*
+* Temp.STATUS
+*
+* Dar seguimiento al dar doble clic
+ThisForm.Seguimiento.Click()
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+*
+* Temp.STATUS
+*
+* Dar seguimiento al dar presionar [Enter]
+If nKeyCode == 13
+	ThisForm.Seguimiento.Click()
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTI</uniqueid>
+		<timestamp>1177582020</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column6</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Valor"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTJ</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column6</parent>
+		<properties>FontSize = 8
+Alignment = 3
+BorderStyle = 0
+Value = 0
+InputMask = "999,999,999.99"
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+*
+* Temp.VALOR
+*
+* Dar seguimiento al dar doble clic
+ThisForm.Seguimiento.Click()
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+*
+* Temp.VALOR
+*
+* Dar seguimiento al dar presionar [Enter]
+If nKeyCode == 13
+	ThisForm.Seguimiento.Click()
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTK</uniqueid>
+		<timestamp>1177582020</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column7</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Agente"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0WNJTL</uniqueid>
+		<timestamp>1177910923</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column7</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE DblClick
+*
+* Temp.AGENTE
+*
+* Dar seguimiento al dar doble clic
+ThisForm.Seguimiento.Click()
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+*
+* Temp.AGENTE
+*
+* Dar seguimiento al dar presionar [Enter]
+If nKeyCode == 13
+	ThisForm.Seguimiento.Click()
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0UJC9N</uniqueid>
+		<timestamp>1178366426</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column8</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Fecha"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0UJC9O</uniqueid>
+		<timestamp>1178366426</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column8</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0UJC9P</uniqueid>
+		<timestamp>1178366426</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column9</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Tipo"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0UJC9Q</uniqueid>
+		<timestamp>1178366426</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column9</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49G0YZ3V8</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>seguimiento</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 16
+Left = 663
+Height = 40
+Width = 65
+Picture = ..\..\msllib60\modificar.bmp
+Caption = "\&lt;Seguimiento"
+TabIndex = 13
+Name = "seguimiento"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Seguimiento
+*
+* Dar seguimiento
+*
+Do DoForm With 'CrmSeguimOport',Temp.NUMOPORT In Crm
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLT</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>LEYENDA2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Tipos de Oportunidad"
+Height = 16
+Left = 13
+Top = 304
+Width = 105
+TabIndex = 15
+Name = "LEYENDA2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLU</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>grid</class>
+		<classloc/>
+		<baseclass>grid</baseclass>
+		<objname>Grid2</objname>
+		<parent>Formamsl1</parent>
+		<properties>ColumnCount = 3
+FontSize = 8
+DeleteMark = .F.
+GridLines = 2
+Height = 96
+Left = 11
+ReadOnly = .T.
+RecordMark = .F.
+RowHeight = 17
+ScrollBars = 2
+TabIndex = 16
+Top = 319
+Width = 279
+Name = "Grid2"
+Column1.FontSize = 8
+Column1.Width = 106
+Column1.ReadOnly = .T.
+Column1.Name = "Column1"
+Column2.FontSize = 8
+Column2.Width = 60
+Column2.ReadOnly = .T.
+Column2.InputMask = "9,999,999"
+Column2.Name = "Column2"
+Column3.FontSize = 8
+Column3.Width = 90
+Column3.ReadOnly = .T.
+Column3.InputMask = "999,999,999.99"
+Column3.Name = "Column3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLT</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid2.Column1</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Tipo"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLT</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid2.Column1</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VYEBI</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid2.Column2</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Cantidad"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLT</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid2.Column2</parent>
+		<properties>FontSize = 8
+Alignment = 3
+BorderStyle = 0
+Value = 0
+InputMask = "9,999,999"
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VYEBJ</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid2.Column3</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Valor"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VYEBK</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid2.Column3</parent>
+		<properties>FontSize = 8
+Alignment = 3
+BorderStyle = 0
+Value = 0
+InputMask = "999,999,999.99"
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0WKBT2</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda3</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Ni\&lt;vel de Aprobación"
+Height = 16
+Left = 403
+Top = 304
+Width = 99
+TabIndex = 19
+Name = "Leyenda3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0WKBT3</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>grid</class>
+		<classloc/>
+		<baseclass>grid</baseclass>
+		<objname>Grid3</objname>
+		<parent>Formamsl1</parent>
+		<properties>ColumnCount = 3
+FontSize = 8
+DeleteMark = .F.
+GridLines = 2
+Height = 96
+Left = 401
+ReadOnly = .T.
+RecordMark = .F.
+RowHeight = 17
+ScrollBars = 2
+TabIndex = 20
+Top = 319
+Width = 279
+Name = "Grid3"
+Column1.FontSize = 8
+Column1.Width = 106
+Column1.ReadOnly = .T.
+Column1.Name = "Column1"
+Column2.FontSize = 8
+Column2.Width = 60
+Column2.ReadOnly = .T.
+Column2.InputMask = "9,999,999"
+Column2.Name = "Column2"
+Column3.FontSize = 8
+Column3.Width = 90
+Column3.ReadOnly = .T.
+Column3.InputMask = "999,999,999.99"
+Column3.Name = "Column3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0WKBT4</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid3.Column1</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Tipo"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0WKBT5</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid3.Column1</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0WKBT6</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid3.Column2</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Cantidad"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0WKBT7</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid3.Column2</parent>
+		<properties>FontSize = 8
+Alignment = 3
+BorderStyle = 0
+Value = 0
+InputMask = "9,999,999"
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0WKBT8</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid3.Column3</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Valor"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0WKBT9</uniqueid>
+		<timestamp>1178368371</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid3.Column3</parent>
+		<properties>FontSize = 8
+Alignment = 3
+BorderStyle = 0
+Value = 0
+InputMask = "999,999,999.99"
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLT</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>statictext</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>cantoport</objname>
+		<parent>Formamsl1</parent>
+		<properties>Alignment = 3
+Value = 0
+Height = 21
+InputMask = "9,999,999"
+Left = 105
+SpecialEffect = 1
+TabIndex = 17
+Top = 414
+Width = 75
+Name = "cantoport"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49D0VSGLU</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>statictext</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>valoroport</objname>
+		<parent>Formamsl1</parent>
+		<properties>Alignment = 3
+Value = 0
+Height = 21
+InputMask = "999,999,999.99"
+Left = 179
+SpecialEffect = 1
+TabIndex = 18
+Top = 414
+Width = 92
+Name = "valoroport"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0XNQYC</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>statictext</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>cantprobcierre</objname>
+		<parent>Formamsl1</parent>
+		<properties>Alignment = 3
+Value = 0
+Height = 21
+InputMask = "9,999,999"
+Left = 495
+SpecialEffect = 1
+TabIndex = 21
+Top = 414
+Width = 75
+Name = "cantprobcierre"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_49P0XNQYD</uniqueid>
+		<timestamp>1178369352</timestamp>
+		<class>statictext</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>valorprobcierre</objname>
+		<parent>Formamsl1</parent>
+		<properties>Alignment = 3
+Value = 0
+Height = 21
+InputMask = "999,999,999.99"
+Left = 569
+SpecialEffect = 1
+TabIndex = 22
+Top = 414
+Width = 92
+Name = "valorprobcierre"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

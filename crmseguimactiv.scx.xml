@@ -1,0 +1,1740 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3O</uniqueid>
+		<timestamp>944596471</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3P</uniqueid>
+		<timestamp>1049521283</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 432
+Width = 701
+DoCreate = .T.
+Caption = "Seguimiento a Actividades"
+KeyPreview = .T.
+Name = "Formamsl1"
+Marco.Top = -25
+Marco.Left = -5
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+If Not OpenDbf('Contactos','NUMCONT') Or;
+	Not OpenDbf('Crm','ID') Or;
+	Not OpenDbf('Clientes','NUMCLI') Or;
+	Not OpenDbf('Usuarios','NUMUSER')
+	Return .F.
+EndIf
+
+* Crea el temporal
+Create Cursor Temp (;
+	ID			C(10),;
+	FECHA		D(8),;
+	HORA		C(5),;
+	NUMCONT		C(6),;
+	NOMCONT		C(30),;
+	EMPRESA		C(30),;
+	TERMINANDA	L(1))
+
+With ThisForm
+	
+	* Poner el modo inicial como consulta
+	* Modo 1 = Agregar
+	* Modo 2 = Consulta
+	.nModo = 2
+	
+	* Poner las lineas del grid del color del formulario
+	.Grid1.GridLineColor = .BackColor
+	
+	* Manda llamar el metodo para cargar los tipos de actividades
+	.TiposDeActividades()
+	
+	* Manda llamar el metodo para cargar las actividades del usuario
+	.CargaActiv()
+	
+	* Mostrar el nombre del usuario
+	.Usuario.Enabled = .F.
+	.Usuario.Value = m.NomUser
+	
+	* Deshabilitar el tipo de actividad
+	.Tipo.Enabled = .F.
+	
+	* Ocultar el boton de Procesar
+	.Save.Visible = .F.
+	
+EndWith
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nkeycode,nshiftaltctrl
+
+* Procesar si presiona [F8]
+If nKeyCode=-7
+	Keyboard '{ALT-P}'
+	NoDefault
+EndIf
+
+* Presion ESC
+If nKeyCode == 27
+	* Cerrar la ventana
+	ThisForm.Release
+EndIf
+
+* Presiono F5
+If nKeyCode == -4
+	* Irme al Grid
+	ThisForm.Grid1.SetFocus()
+EndIf
+
+ENDPROC
+PROCEDURE Unload
+* Borrar los temporales
+DelAlias('Temp')
+DelAlias('Temp2')
+DoDefault()
+
+ENDPROC
+PROCEDURE cargaactiv
+*
+* CargaActiv
+*
+* Metodo para cargar las actividades del usuario
+*
+With ThisForm
+	
+	* Borra el temporal
+	Select Temp
+	Zap
+	
+	.Grid1.RecordSource = ''
+	
+	* Almacena en una variable el numero de usuario
+	cNumUser = m.NumUser
+	
+	* Busca en CRM las actividades que cumplan con las restricciones
+	If Not SqlMsl('Temp','Select Crm.ID,Crm.FECHA, '+;
+		'SubStr(TToC(Crm.FECHA),12,5) As Hora, '+;
+		'Crm.NUMCONT As NumCont,Contactos.NOMCONT As NomCont,Contactos.EMPRESA As Empresa, '+;
+		'IIF(Crm.TERMINADA,"OK","PEND") As Terminada ' +;
+		'From Crm '+;
+		'Left Join Contactos On Crm.NUMCONT == Contactos.NUMCONT '+;
+		'Where '+;
+		'Crm.ACTIVIDAD = .T.  and '+;
+		'Crm.NUMUSER == m.Val1',;
+		cNumUser)
+Return
+	EndIf
+	
+	* Muestra los datos de TEMP
+	.LockScreen = .T.
+	With ThisForm.Grid1
+		.RecordSourceType = 1
+		.RecordSource = 'Temp'
+		
+		* Crear el indice por el numero de actividad
+		Select Temp
+		Index On Id Tag ID
+		
+		.Column1.ControlSource = 'Left(MexDate3(Temp.FECHA),6)'
+		.Column2.ControlSource = 'Temp.HORA'
+		.Column3.ControlSource = 'Temp.NOMCONT'
+		.Column4.ControlSource = 'Temp.EMPRESA'
+		.Column5.ControlSource = 'Temp.TERMINADA'
+		
+		* Poner en rojo las actividades pendientes
+		.SetAll('DynamicForeColor','IIF(Allt(Temp.TERMINADA)=="PEND",Rgb(255,0,0),Rgb(0,0,0))')
+		Go Bott
+		.SetFocus
+
+	EndWith
+	.LockScreen = .F.
+
+	* Muestra mensaje si no se encontro informacion
+	If Reccount('Temp')==0
+		Alerta('No se encontró información')
+		Return
+	EndIf
+	
+EndWith
+
+ENDPROC
+PROCEDURE mostraractividad
+*
+* MostrarActividad
+*
+* Metodo para mostrar la informacion de la actividad seleccionada
+*
+With ThisForm
+	
+	* Poner el modo como consulta
+	.nModo = 2
+	
+	* Buscar el Id de la actividad para obtener su informacion
+	=Seek(Temp.ID,'Crm')
+	
+	* Mostrar el nombre del usuario
+	cNumUser = Crm.NUMUSER
+	If Seek(cNumUser,'Usuarios')
+		.Usuario.Value = Usuarios.NOMUSER
+	EndIf
+	
+	* Obtener la informacion del contacto
+	cNumCont = Crm.NUMCONT
+	If Seek(cNumCont,'Contactos')
+		.InfoCont.LeeContacto.Clave.Value = cNumCont
+		.InfoCont.LeeContacto.Nombre.Value = Contactos.NOMCONT
+		.InfoCont.LeeContacto.LostFocus()
+	EndIf
+	
+	* Mostrar el tipo de actividad
+	.Tipo.Nombre.Value = Crm.TIPO
+	.Obs.Value = Crm.OBS
+	.Seguim.Value = Crm.SEGUIM
+	
+	* Deshabilitar el tipo de actividad
+	.Tipo.Enabled = .F.
+	
+	* Ocultar el boton de Procesar
+	.Save.Visible = .F.
+	
+	* Mostrar el boton del status
+	.Status.Visible = .T.
+	
+EndWith
+
+ENDPROC
+PROCEDURE tiposdeactividades
+* Cargar los tipos de actividades
+With ThisForm
+	Local i,cTipos,cNomActiv
+
+	* Obtener los tipos de actividades de CONFIG.MSL
+	cTipos = GetMsl('CrmTiposDeActividad')
+	cNomActiv = ''
+
+	Create Cursor CrmActiv(;
+		NUMACTIV C(5),;
+		NOMACTIV C(20))
+		
+	Index on NUMACTIV Tag NumActiv
+	Index on UPPER(NOMACTIV) Tag NomActiv
+	
+	* Crear temporal con los tipos
+	i = 1
+	Do While .t.
+		cNomActiv = SubLin(cTipos,i)
+		If Empty(cNomActiv)
+			Exit
+		Endif
+		Insert Into CrmActiv Values ( Str(i,5,0), cNomActiv)
+		i=i+1
+	Enddo
+
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>fechaini
+nmodo
+ccond
+*cargaactiv 
+*mostraractividad 
+*tiposdeactividades 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3Q</uniqueid>
+		<timestamp>1049519680</timestamp>
+		<class>grid</class>
+		<classloc/>
+		<baseclass>grid</baseclass>
+		<objname>Grid1</objname>
+		<parent>Formamsl1</parent>
+		<properties>ColumnCount = 5
+FontSize = 8
+DeleteMark = .F.
+GridLines = 2
+Height = 375
+Left = 10
+Panel = 1
+ReadOnly = .T.
+RecordMark = .F.
+RowHeight = 17
+ScrollBars = 2
+SplitBar = .F.
+TabIndex = 1
+Top = 10
+Width = 390
+Name = "Grid1"
+Column1.FontSize = 8
+Column1.Width = 45
+Column1.ReadOnly = .T.
+Column1.Name = "Column1"
+Column2.FontSize = 8
+Column2.Width = 39
+Column2.ReadOnly = .T.
+Column2.Name = "Column2"
+Column3.FontSize = 8
+Column3.Width = 116
+Column3.ReadOnly = .T.
+Column3.Name = "Column3"
+Column4.FontSize = 8
+Column4.Width = 123
+Column4.ReadOnly = .T.
+Column4.Name = "Column4"
+Column5.FontSize = 8
+Column5.Width = 40
+Column5.ReadOnly = .T.
+Column5.Name = "Column5"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3R</uniqueid>
+		<timestamp>944596471</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column1</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Fecha"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3S</uniqueid>
+		<timestamp>946622564</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column1</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+*
+* Fecha
+*
+* Manda llamar el metodo para mostrar la informacion de la actividad
+*
+ThisForm.MostrarActividad()
+
+* Mostrar el status de la actividad en el boton
+If Temp.TERMINADA == 'PEND'
+	ThisForm.Status.Caption = '\&lt;OK'
+Else
+	ThisForm.Status.Caption = 'PEND'
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3T</uniqueid>
+		<timestamp>944596471</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column2</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Hora"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3U</uniqueid>
+		<timestamp>946622564</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column2</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+*
+* Hora
+*
+* Manda llamar el metodo para mostrar la informacion de la actividad
+*
+ThisForm.MostrarActividad()
+
+* Mostrar el status de la actividad en el boton
+If Temp.TERMINADA == 'PEND'
+	ThisForm.Status.Caption = '\&lt;OK'
+Else
+	ThisForm.Status.Caption = 'PEND'
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3V</uniqueid>
+		<timestamp>944596471</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column3</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Contacto"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3W</uniqueid>
+		<timestamp>946622564</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column3</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+*
+* Contacto
+*
+* Manda llamar el metodo para mostrar la informacion de la actividad
+*
+ThisForm.MostrarActividad()
+
+* Mostrar el status de la actividad en el boton
+If Temp.TERMINADA == 'PEND'
+	ThisForm.Status.Caption = '\&lt;OK'
+Else
+	ThisForm.Status.Caption = 'PEND'
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3X</uniqueid>
+		<timestamp>944596471</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column4</parent>
+		<properties>FontSize = 8
+Alignment = 2
+Caption = "Empresa"
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3Y</uniqueid>
+		<timestamp>946622564</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column4</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+*
+* Empresa
+*
+* Manda llamar el metodo para mostrar la informacion de la actividad
+*
+ThisForm.MostrarActividad()
+
+* Mostrar el status de la actividad en el boton
+If Temp.TERMINADA == 'PEND'
+	ThisForm.Status.Caption = '\&lt;OK'
+Else
+	ThisForm.Status.Caption = 'PEND'
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3Z</uniqueid>
+		<timestamp>944596471</timestamp>
+		<class>header</class>
+		<classloc/>
+		<baseclass>header</baseclass>
+		<objname>Header1</objname>
+		<parent>Formamsl1.Grid1.Column5</parent>
+		<properties>FontSize = 8
+Caption = ""
+Name = "Header1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC40</uniqueid>
+		<timestamp>946622564</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>Text1</objname>
+		<parent>Formamsl1.Grid1.Column5</parent>
+		<properties>FontSize = 8
+BorderStyle = 0
+Margin = 0
+ReadOnly = .T.
+ForeColor = 0,0,0
+BackColor = 255,255,255
+Name = "Text1"
+</properties>
+		<protected/>
+		<methods>PROCEDURE GotFocus
+*
+* Status
+*
+* Manda llamar el metodo para mostrar la informacion de la actividad
+*
+ThisForm.MostrarActividad()
+
+* Mostrar el status de la actividad en el boton
+If Temp.TERMINADA == 'PEND'
+	ThisForm.Status.Caption = '\&lt;OK'
+Else
+	ThisForm.Status.Caption = 'PEND'
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RPM4S</uniqueid>
+		<timestamp>944933294</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Usuario"
+Height = 16
+Left = 414
+Top = 15
+Width = 39
+TabIndex = 2
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RPM4U</uniqueid>
+		<timestamp>944933294</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>usuario</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+RowSourceType = 6
+RowSource = "Usuarios.NOMUSER"
+DisplayValue = 1
+Height = 20
+Left = 458
+Style = 2
+TabIndex = 3
+Top = 13
+Width = 230
+Name = "usuario"
+</properties>
+		<protected/>
+		<methods>PROCEDURE InteractiveChange
+* Almacena en una propiedad el numero de usuario
+ThisForm.cNumUser = Usuarios.NUMUSER
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AX10X1MA</uniqueid>
+		<timestamp>944933294</timestamp>
+		<class>leernombre</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>tipo</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 181
+Left = 409
+Width = 203
+Height = 21
+TabIndex = 5
+ZOrderSet = 4
+calias = CrmActiv
+ccampoclave = CrmActiv.NUMACTIV
+ccamponombre = CrmActiv.NOMACTIV
+cformabusqueda = 
+ctagclave = NumActiv
+ctagnombre = NomActiv
+nanchoclave = 5
+lverclave = .T.
+Name = "tipo"
+Container1.Name = "Container1"
+List1.Name = "List1"
+Nombre.Name = "Nombre"
+Leyenda1.Caption = "Acti\&lt;vidad"
+Leyenda1.Name = "Leyenda1"
+Clave.Name = "Clave"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3O</uniqueid>
+		<timestamp>944933294</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda4</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Descripción"
+Height = 16
+Left = 409
+Top = 207
+Width = 59
+TabIndex = 6
+Name = "Leyenda4"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3P</uniqueid>
+		<timestamp>945129309</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>Obs</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+AddLineFeeds = .T.
+Height = 80
+Left = 409
+TabIndex = 7
+Top = 222
+Width = 280
+Name = "Obs"
+</properties>
+		<protected/>
+		<methods>PROCEDURE LostFocus
+*
+* Obs
+*
+* Actualizar el campo Crm.OBS
+*
+If ThisForm.nModo = 2
+	If Seek(Temp.ID,'Crm')
+		Select Crm
+		Replace	Crm.OBS		With	Allt(This.Value)
+	EndIf
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RPM4W</uniqueid>
+		<timestamp>944933294</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Seguimiento"
+Height = 16
+Left = 409
+Top = 305
+Width = 60
+TabIndex = 8
+Name = "Leyenda2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RPM4X</uniqueid>
+		<timestamp>945129288</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>Seguim</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+AddLineFeeds = .T.
+Height = 65
+Left = 409
+TabIndex = 9
+Top = 320
+Width = 280
+Name = "Seguim"
+</properties>
+		<protected/>
+		<methods>PROCEDURE LostFocus
+*
+* Seguim
+*
+* Actualizar el campo Crm.SEGUIM
+*
+If ThisForm.nModo = 2
+	If Seek(Temp.ID,'Crm')
+		Select Crm
+		Replace	Crm.SEGUIM		With	Allt(This.Value)
+	EndIf
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3O</uniqueid>
+		<timestamp>944933294</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>hcontacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 150
+Left = 580
+Height = 25
+Width = 55
+Caption = "Contacto"
+TabIndex = 16
+Name = "hcontacto"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+cNumCont = ThisForm.InfoCont.LeeContacto.Clave.Value
+
+If Left(cNumCont,3) == 'F2='
+	cNumCont = ''
+EndIf
+
+* Es un nuevo contacto. No hay historial de este contacto
+If Empty(cNumCont)
+	Alerta('Contacto no existe')
+	Return .F.
+Else
+	* Manda llamar la ventana del historial del contacto
+	Do DoForm With 'CrmHistContacto',cNumCont In Crm
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3O</uniqueid>
+		<timestamp>944933294</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>hcliente</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 150
+Left = 635
+Height = 25
+Width = 55
+Caption = "Cliente"
+TabIndex = 17
+Name = "hcliente"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+cNumCli = ThisForm.InfoCont.LeeCliente.Clave.Value
+
+* El contacto no tiene cliente
+If Empty(cNumCli)
+	Alerta('Contacto no tiene especificado el cliente')
+	Return .F.
+Else
+	* Manda llamar la ventana del historial del cliente
+	Do DoForm With 'CrmHistCliente',cNumCli In Crm
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0UISUF</uniqueid>
+		<timestamp>944933294</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda5</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Historial"
+Height = 16
+Left = 535
+Top = 154
+Width = 40
+TabIndex = 15
+Name = "Leyenda5"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0UISUG</uniqueid>
+		<timestamp>1049519120</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>save</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 390
+Left = 595
+Height = 25
+Width = 84
+Caption = "F8 = \&lt;Procesar"
+TabIndex = 10
+Name = "save"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+* Grabar la informacion
+With ThisForm
+	
+	With ThisForm.oContacto
+		* Llenar la informacion del contacto
+		.NumCont = ThisForm.InfoCont.LeeContacto.Clave.Value
+		.NomCont = ThisForm.InfoCont.LeeContacto.Nombre.Value
+		.Empresa = ThisForm.InfoCont.Empresa.Value
+		.Telefono = ThisForm.InfoCont.Telefono.Value
+		.Mail = ThisForm.InfoCont.Mail.Value
+		.NumCli = ThisForm.InfoCont.LeeCliente.Clave.Value
+
+		* Manda llamar el metodo para validar la informacion para grabar el contacto
+		If Not .ValidAgregar()
+			Alerta(.cError)
+			* Manda llamar metodo para enviar el focus al control especifico
+			ThisForm.EnviarFocus()
+			Return .F.
+		EndIf
+	
+	EndWith
+	
+	With ThisForm.oActividad	
+		* Llenar la informacion de la actividad
+		.Id = ''
+		.Tipo = ThisForm.Tipo.Nombre.Value
+		.Fecha = ThisForm.FechaIni
+		.FechaFin = DateTime()
+		.Obs = Allt(ThisForm.Obs.Value)
+		.NumUser = m.NumUser
+		.NumUserGen = m.NumUser
+		.Actividad = .T.
+		.NumCotiza = ''
+		.StatusCot = 0
+		.Refer = ''
+		.NumOrden = ''
+		.OrdenPost = ''
+		
+		* Manda llamar el metodo para validar la informacion para grabar la actividad
+		If Not .ValidAgregar()
+			Alerta(.cError)
+			* Manda llamar metodo para enviar el focus al control especifico
+			ThisForm.EnviarFocus()
+			Return .F.
+		EndIf
+	
+	EndWith
+	
+	* Manda llamar el metodo para grabar al contacto
+	If Not .oContacto.Agregar()
+		Alerta(.oContacto.cError)
+		Return .F.
+	EndIf
+
+	* Asigna el numero de contacto despues de haberlo grabado
+	.oActividad.NumCont = .oContacto.NumCont
+	
+	* Agregar
+	* Manda llamar el metodo para agregar una nueva actividad
+	If Not .oActividad.Agregar()
+		Alerta(.oActividad.cError)
+		Return .F.
+	EndIf
+	
+	* Almacena en una variable el numero de actividad
+	cId = .oActividad.Id
+	
+	* Almacenar el seguimiento de la actividad
+	m.Seguim = Allt(.Seguim.Value)
+	=Seek(cId,'Crm')
+	Replace	Crm.SEGUIM		With	m.Seguim,;
+			Crm.TERMINADA	With	IIF(Empty(m.Seguim),.F.,.T.)
+	
+	* Agregar un nuevo registro al temporal con la actividad que acabamos de agregar
+	Select Temp
+	Append Blank
+	Replace Temp.ID			With	Crm.ID,;
+			Temp.FECHA		With	Crm.FECHA,;
+			Temp.HORA		With	SubStr(TToC(Crm.FECHA),12,5),;
+			Temp.NUMCONT	With	Crm.NUMCONT,;
+			Temp.NOMCONT	With	.InfoCont.LeeContacto.Nombre.Value,;
+			Temp.EMPRESA	With	.InfoCont.Empresa.Value,;
+			Temp.TERMINADA	With	IIF(Empty(m.Seguim),'PEND','OK')
+	
+	* Poner el modo como consulta
+	.nModo = 2
+	
+	* Poner en rojo solo las actividades pendientes
+	.Grid1.SetAll('DynamicForeColor','IIF(Allt(Temp.TERMINADA)=="PEND",Rgb(255,0,0),Rgb(0,0,0))')
+	.Grid1.Refresh()
+	.Grid1.SetFocus()
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0RFC3O</uniqueid>
+		<timestamp>1049519680</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>nueva</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 390
+Left = 10
+Height = 25
+Width = 90
+Caption = "\&lt;Nueva Actividad"
+TabIndex = 13
+Name = "nueva"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Nueva
+*
+* Permite agregar una nueva actividad
+*
+With ThisForm
+	
+	* Poner el modo como agregar
+	.nModo = 1
+	
+	* Poner el usuario actual
+	.Usuario.Value = m.NomUser
+	
+	* Habilitar los datos del contacto
+	.InfoCont.LeeContacto.Clave.Value = ''
+	.InfoCont.LeeContacto.Nombre.Value = ''
+	.InfoCont.LeeContacto.LostFocus()
+	
+	* Habilitar el tipo de actividad
+	.Tipo.Enabled = .T.
+	
+	.Obs.Value = ''
+	.Seguim.Value = ''
+	
+	* Mostrar el boton de Procesar
+	.Save.Visible = .T.
+	
+	* Ocultar el boton del status
+	.Status.Visible = .F.
+	
+	* Almacena en una propiedad la fecha y hora de inicio de la actividad
+	.FechaIni = DateTime()
+	
+	* Poner el focus en el contacto
+	.InfoCont.LeeContacto.SetFocus()
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0UISUI</uniqueid>
+		<timestamp>944989099</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>copiar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 390
+Left = 410
+Height = 25
+Width = 40
+Caption = "Copiar"
+TabIndex = 14
+Name = "copiar"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Copiar
+*
+* Copia la informacion de la actividad seleccionada
+*
+With ThisForm
+	
+	m.Texto = ''
+	
+	Select Temp
+	m.Texto = '#'+Allt(Temp.ID)+' '+MexDate2(Temp.FECHA)+' '+Temp.HORA+Chr(13)+;
+		Proper(Allt(Temp.NOMCONT))+Chr(13)+Proper(Allt(Temp.EMPRESA))+Chr(13)+Temp.TERMINADA+Chr(13)+;
+		+Allt(.Tipo.Nombre.Value)+Chr(13)+'Descripción:'+Chr(13)+Allt(.Obs.Value)+Chr(13)+;
+		'Seguimiento:'+Chr(13)+Allt(.Seguim.Value)+Chr(13)
+		
+	* Copiar el clipboard la informacion de la actividad
+	_ClipText = m.Texto
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AS0UU9TQ</uniqueid>
+		<timestamp>1049519120</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>status</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 390
+Left = 535
+Height = 25
+Width = 50
+Caption = "\&lt;OK"
+TabIndex = 11
+Name = "status"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Status
+*
+* Actualizar el status de la actividad
+*
+With ThisForm
+	* Validar que no se pueda terminar la actividad sin especificar el seguimiento
+	If Temp.TERMINADA == 'PEND'
+		If Empty(.Seguim.Value)
+			Aviso('No se puede omitir el seguimiento')
+			.Seguim.SetFoCus()
+			Return .F.
+		EndIf
+	EndIf
+	
+	If Seek(Temp.ID,'Crm')
+		If Crm.TERMINADA
+			* Poner la actividad como Pendiente
+			Replace	Crm.TERMINADA		With	.F.
+			
+			* Actualizar el temporal
+			Select Temp
+			Replace	Temp.TERMINADA		With	'PEND'
+			This.Caption = '\&lt;OK'
+		Else
+			* Poner la actividad como Ok
+			Replace	Crm.TERMINADA		With	.T.
+			
+			* Actualizar el temporal
+			Select Temp
+			Replace	Temp.TERMINADA		With	'OK'
+			This.Caption = 'PEND'
+		EndIf
+		
+		* Poner en rojo solo las actividades pendientes
+		.Grid1.SetAll('DynamicForeColor','IIF(Allt(Temp.TERMINADA)=="PEND",Rgb(255,0,0),Rgb(0,0,0))')
+		.Grid1.SetFocus()
+		
+	EndIf
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AT11NJIA</uniqueid>
+		<timestamp>946624673</timestamp>
+		<class>infocont</class>
+		<classloc>infocont.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>Infocont</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 32
+Left = 405
+Width = 287
+Height = 120
+TabIndex = 4
+Name = "Infocont"
+LeeContacto.Container1.Name = "Container1"
+LeeContacto.List1.Name = "List1"
+LeeContacto.Nombre.Name = "Nombre"
+LeeContacto.Leyenda1.Name = "Leyenda1"
+LeeContacto.Clave.Name = "Clave"
+LeeContacto.Name = "LeeContacto"
+Leyenda1.Name = "Leyenda1"
+empresa.Name = "empresa"
+Leyenda2.Name = "Leyenda2"
+telefono.Name = "telefono"
+Leyenda3.Name = "Leyenda3"
+mail.Name = "mail"
+Leyenda4.Caption = "Cliente"
+Leyenda4.Name = "Leyenda4"
+LeeCliente.Clave.Name = "Clave"
+LeeCliente.Nombre.Name = "Nombre"
+LeeCliente.Buscar.Name = "Buscar"
+LeeCliente.Name = "LeeCliente"
+</properties>
+		<protected/>
+		<methods>PROCEDURE LostFocus
+*
+* InfoCont
+*
+* Graba la informacion del contacto en caso de estar modificando
+*
+With ThisForm
+	
+	If .nModo == 2
+		
+		With ThisForm.oContacto
+			* Llenar la informacion del contacto
+			.NumCont = ThisForm.InfoCont.LeeContacto.Clave.Value
+			.NomCont = ThisForm.InfoCont.LeeContacto.Nombre.Value
+			.Empresa = ThisForm.InfoCont.Empresa.Value
+			.Telefono = ThisForm.InfoCont.Telefono.Value
+			.Mail = ThisForm.InfoCont.Mail.Value
+			.NumCli = ThisForm.InfoCont.LeeCliente.Clave.Value
+			
+			* Manda llamar el metodo para validar la informacion para grabar el contacto
+			If Not .ValidAgregar()
+				Alerta(.cError)
+				* Manda llamar metodo para enviar el focus al control especifico
+				ThisForm.EnviarFocus()
+				Return .F.
+			EndIf
+		
+		EndWith
+		
+		* Manda llamar el metodo para grabar al contacto
+		If Not .oContacto.Agregar()
+			Alerta(.oContacto.cError)
+			Return .F.
+		EndIf
+		
+		* Asigna el numero de contacto despues de haberlo grabado
+		cNumCont = .oContacto.NumCont
+		
+		* Validar si cambio de contacto
+		If Temp.NUMCONT &lt;&gt; cNumCont
+			* Si cambio de contacto. Actualizar en Crm.DBF y en Temp.DBF
+			
+			* Almacena en una variable el numero de actividad
+			cId = Temp.ID
+			
+			* Actualiza el numero del contacto
+			=Seek(cId,'Crm')
+			Replace	Crm.NUMCONT		With	cNumCont
+			
+			* Actualiza la informacion del contacto en el temporal
+			Select Temp
+			Replace Temp.NUMCONT	With	cNumCont,;
+					Temp.NOMCONT	With	.InfoCont.LeeContacto.Nombre.Value,;
+					Temp.EMPRESA	With	.InfoCont.Empresa.Value
+			
+		EndIf
+		
+	EndIf
+		
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AU0SYV5T</uniqueid>
+		<timestamp>1049519680</timestamp>
+		<class>contacto</class>
+		<classloc>contacto.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oContacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 392
+Left = 197
+Height = 20
+Width = 30
+Name = "oContacto"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2AX10DFCX</uniqueid>
+		<timestamp>1049519680</timestamp>
+		<class>actividad</class>
+		<classloc>actividad.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oActividad</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 392
+Left = 237
+Height = 20
+Width = 30
+Name = "oActividad"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_3710RI7LD</uniqueid>
+		<timestamp>1049521283</timestamp>
+		<class>cajaverif</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>checkbox</baseclass>
+		<objname>pendientes</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 390
+Left = 308
+Height = 16
+Width = 71
+Caption = "Pend\&lt;ientes"
+Name = "pendientes"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+*
+* Pendientes
+*
+* Agregar o quitar el filtro para solo ver las pendientes
+*
+If This.Value
+	* Ver pendientes
+	Select Temp
+	Set Filter to TERMINADA == 'PEND'
+	
+	* Actualizar la cuadricula
+	ThisForm.Grid1.Refresh()
+	
+Else
+	* Ver todas
+	Select Temp
+	Set Filter to
+	
+	* Actualizar la cuadricula
+	ThisForm.Grid1.Refresh()
+		
+EndIf
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

@@ -1,0 +1,648 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970OYL9H</uniqueid>
+		<timestamp>818371799</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970OYL9I</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 211
+Width = 352
+DoCreate = .T.
+Caption = "Contactos"
+Name = "Formamsl1"
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+LParameter nAccion,nRecno
+If not OpenDbf('Contactos','NumCont') or;
+	not OpenDbf('Clientes','NumCli')
+	return .f.
+Endif
+
+If Type('nAccion')=='L'
+	nAccion = 1
+Endif
+
+With ThisForm
+	.AddProperty('nAccion',nAccion)
+	
+	Do Case
+	Case .nAccion==1
+		.Caption = 'Agregar Contacto'
+		.Save.Caption = '\&lt;Agregar'
+		
+	Case .nAccion==2
+		.Caption = 'Modificar Contacto'
+		.Save.Caption = '\&lt;Modificar'
+		.CargaInfo(nRecno)
+		
+	Case .nAccion==3
+		.Caption = 'Eliminar Contacto'
+		.Save.Caption = '\&lt;Eliminar'
+		.CargaInfo(nRecno)
+		.SetAll('Enabled',.f.)
+		.Save.Enabled = .t.
+		.Cerrar.Enabled = .t.
+		
+	EndCase
+EndWith
+
+ENDPROC
+PROCEDURE cargainfo
+* Metodo para cargar la informacion
+LParameter nRecno
+
+Select Contactos
+Goto nRecno
+
+With ThisForm
+	.NumCont.Value = Contactos.NUMCONT
+	.NomCont.Value = Contactos.NOMCONT
+	.Empresa.Value = Contactos.EMPRESA
+	.Telefono.Value = Contactos.TELEFONO
+	.Mail.Value = Contactos.MAIL
+	.LeeCve1.SetValue(Contactos.NUMCLI)
+	
+EndWith
+
+ENDPROC
+PROCEDURE saveinfo
+* Metodo para grabar la informacion
+With ThisForm
+	Select Contactos
+	If .nAccion==1
+		Go Bottom
+		cNumCont = Str(Val(NUMCONT)+1,6,0)
+		Append Blank
+		Replace NUMCONT	with cNumCont
+	Endif
+	Replace ;
+		NOMCONT		With	.NomCont.Value,;
+		EMPRESA		With	.Empresa.Value,;
+		NUMCLI		With	.LeeCve1.Clave.Value,;
+		MAIL		With	.Mail.Value,;
+		TELEFONO	With	.Telefono.Value
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>*cargainfo 
+*saveinfo 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970PLASF</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Nombre"
+Left = 20
+Top = 38
+TabIndex = 3
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970OYL9H</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>NomCont</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 65
+TabIndex = 4
+Top = 36
+Width = 272
+Name = "NomCont"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970PLASG</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>statictext</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>NumCont</objname>
+		<parent>Formamsl1</parent>
+		<properties>Left = 65
+TabIndex = 2
+Top = 15
+Name = "NumCont"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970OYL9H</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Empresa"
+Left = 15
+Top = 60
+TabIndex = 5
+Name = "Leyenda2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970PLASI</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>Empresa</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 65
+TabIndex = 6
+Top = 58
+Width = 272
+Name = "Empresa"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970OYL9H</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda3</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Teléfono"
+Left = 15
+Top = 82
+TabIndex = 7
+Name = "Leyenda3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970PLASP</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>Telefono</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 21
+Left = 65
+TabIndex = 8
+Top = 80
+Width = 272
+Name = "Telefono"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970PLASR</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>Save</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 167
+Left = 85
+Height = 25
+Width = 69
+Caption = "\&lt;Grabar"
+TabIndex = 13
+Name = "Save"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+With ThisForm
+	Do Case
+	Case .nAccion==1
+		.SaveInfo()
+		.Release
+		
+	Case .nAccion==2
+		.SaveInfo()
+		.Release
+
+	Case .nAccion==3
+		If GetNY('¿Seguro que desea borrar el contacto?')
+			Select Contactos
+			Delete
+			.Release
+		Endif
+		
+	EndCase
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970PLASS</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>closebutton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>Cerrar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 167
+Left = 196
+Caption = "\&lt;Cerrar"
+TabIndex = 14
+Name = "Cerrar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970QHXOS</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>leecve</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>Leecve1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 125
+Left = 65
+Width = 273
+Height = 20
+TabIndex = 12
+calias = Clientes
+cexprnombre = Clientes.NOMCLI
+cformabusqueda = ListClie
+nanchoclave = 5
+Name = "Leecve1"
+Clave.Name = "Clave"
+Nombre.Height = 20
+Nombre.Left = 80
+Nombre.Top = 0
+Nombre.Width = 192
+Nombre.Name = "Nombre"
+Buscar.Name = "Buscar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1970QKUVM</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda4</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Clie\&lt;nte"
+Left = 25
+Top = 127
+TabIndex = 11
+Name = "Leyenda4"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1OZ0RC425</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda5</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Clave"
+Height = 16
+Left = 30
+Top = 17
+Width = 29
+TabIndex = 1
+Name = "Leyenda5"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1OZ0RKM1P</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda8</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "E-\&lt;Mail"
+Left = 29
+Top = 105
+TabIndex = 9
+Name = "Leyenda8"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1OZ0RKM1Q</uniqueid>
+		<timestamp>865756848</timestamp>
+		<class>texto</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>mail</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 22
+Left = 65
+TabIndex = 10
+Top = 102
+Width = 272
+Name = "mail"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>

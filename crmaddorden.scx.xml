@@ -1,0 +1,1292 @@
+<?xml version = "1.0" encoding="UTF-8" standalone="yes"?>
+<VFPData>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>Screen</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties/>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1>VERSION =   3.00</reserved1>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WB</uniqueid>
+		<timestamp>863919307</timestamp>
+		<class>dataenvironment</class>
+		<classloc/>
+		<baseclass>dataenvironment</baseclass>
+		<objname>Dataenvironment</objname>
+		<parent/>
+		<properties>Name = "Dataenvironment"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2>1</reserved2>
+		<reserved3/>
+		<reserved4>2</reserved4>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WC</uniqueid>
+		<timestamp>1026972826</timestamp>
+		<class>formamsl</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>form</baseclass>
+		<objname>Formamsl1</objname>
+		<parent/>
+		<properties>Height = 299
+Width = 619
+DoCreate = .T.
+Caption = "Agregar Orden de Servicio"
+KeyPreview = .T.
+cnumuser =  
+cidactividad =  
+cnumcont =  
+cobsactiv =  
+Name = "Formamsl1"
+Marco.ZOrderSet = 2
+Marco.Name = "Marco"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Init
+LParameter cIdActividad,cNumCont,cObsActiv
+If Not OpenDbf('Contactos','NUMCONT') Or;
+	Not OpenDbf('Crm','ID') Or;
+	Not OpenDbf('Clientes','NUMCLI') Or;
+	Not OpenDbf('Usuarios','NUMUSER') Or;
+	Not OpenDbf('Proy','NUMPROY') Or;
+	Not OpenDbf('Ordenes','NUMORDEN') Or;
+	Not OpenDbf('Cia')
+	Return .F.
+EndIf
+
+Create Cursor TempProy (;
+	NumProy	C(10),;
+	Nombre	C(20))
+
+With ThisForm
+
+	* Almacena el numero de folio, contacto y observavciones en caso de que se haya mandado llamar
+	* desde Agregar Actividad
+	.cIdActividad = cIdActividad
+	.cNumCont = cNumCont
+	.cObsActiv = cObsActiv
+
+	* Manda llamar el metodo para cargar la informacion de la actividad
+	If Not Empty(.cIdActividad) And Not Empty(.cNumCont)
+		.CargarActividad()
+	EndIf
+	
+	* Manda llamar el metodo para cargar los tipos de actividades
+	.TiposDeActividades()
+	
+	Select Ordenes
+	Go Bott
+	.NumOrden.Value = Padl(Allt(SigDoc(NUMORDEN)),10)
+	
+	.HrsEstim.Value = '15m'
+EndWith	
+
+ENDPROC
+PROCEDURE KeyPress
+LPARAMETERS nKeyCode, nShiftAltCtrl
+
+With ThisForm
+	* Procesar si presiona [F8]
+	If nKeyCode=-7
+		Keyboard '{ALT-P}'
+		NoDefault
+	Endif	
+
+	* Presion ESC
+	If nKeyCode == 27
+		* No hacer nada, estoy agregando una orden
+		NoDefault
+		Return
+	EndIf
+
+EndWith
+ENDPROC
+PROCEDURE cargaractividad
+* Metodo para cargar la actividad
+* se usa cuando se manda llamar la ventana desde Agregar Actividad
+With ThisForm
+	
+	* Obtener la informacion del contacto
+	If Seek(.cNumCont,'Contactos')
+		.InfoCont.LeeContacto.Clave.Value = .cNumCont
+		.InfoCont.LeeContacto.Nombre.Value = Contactos.NOMCONT
+		.InfoCont.LeeContacto.LostFocus()
+	EndIf
+	
+	.Problema.Value = .cObsActiv
+	
+	* Poner el focus en el usuario
+	.Usuario.SetFocus
+	
+EndWith
+
+ENDPROC
+PROCEDURE cargarproyectosdelcliente
+*
+* CargarProyectosDelCliente
+*
+* Carga los proyectos activos del cliente
+
+With ThisForm
+	.Proyecto.RowSource = ''
+	cNumCli = .InfoCont.LeeCliente.Clave.Value
+	cSql = 'select nombre,numproy from proy where numcli=val1 and not completo'
+	if not SqlMsl('TempProy',cSql,cNumCli)
+		return
+	endif
+	if reccount()==0
+		.proyecto.value = ''
+		.proyecto.enabled = .f.
+	else
+		Select TempProy
+		Append Blank
+		Go Top
+		.proyecto.RowSource = 'TempProy.NOMBRE'
+		.proyecto.Value = TempProy.NOMBRE
+		.proyecto.Enabled = .t.
+	endif
+EndWith
+ENDPROC
+PROCEDURE enviarfocus
+With ThisForm
+	* Manda el Focus al contacto
+	If .oContacto.nError = 1
+		.InfoCont.LeeContacto.SetFocus
+	EndIf	
+	
+	* Manda el focus a la empresa del contacto
+	If .oContacto.nError = 2
+		.InfoCont.Empresa.SetFocus
+	EndIf	
+	
+	* Manda el focus al telefono del contacto
+	If .oContacto.nError = 3
+		.InfoCont.Telefono.SetFocus
+	EndIf	
+	
+	* Manda el focus la prioridad
+	If .oOrden.nError = 1
+		.Prioridad.SetFocus
+	EndIf
+		
+	* Manda el focus a el usuario
+	If .oOrden.nError = 2
+		.Usuario.SetFocus
+	EndIf
+
+	* Manda el focus al tipo de actividad
+	If .oOrden.nError = 3
+		.Tipo.SetFocus
+	EndIf
+	
+	* Manda el focus al problema a resolver
+	If .oOrden.nError = 4
+		.Problema.SetFocus
+	EndIf
+
+EndWith
+
+ENDPROC
+PROCEDURE tiposdeactividades
+* Cargar los tipos de actividades
+With ThisForm
+	Local i,cTipos,cNomActiv
+
+	* Obtener los tipos de actividades de CONFIG.MSL
+	cTipos = GetMsl('CrmTiposDeActividad')
+	cNomActiv = ''
+
+	Create Cursor CrmActiv(;
+		NUMACTIV C(5),;
+		NOMACTIV C(20))
+		
+	Index on NUMACTIV Tag NumActiv
+	Index on UPPER(NOMACTIV) Tag NomActiv
+	
+	* Crear temporal con los tipos
+	i = 1
+	Do While .t.
+		cNomActiv = SubLin(cTipos,i)
+		If Empty(cNomActiv)
+			Exit
+		Endif
+		Insert Into CrmActiv Values ( Str(i,5,0), cNomActiv)
+		i=i+1
+	Enddo
+
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3>cnumuser
+cidactividad
+cnumcont
+cobsactiv
+*tiposdeactividades 
+*enviarfocus 
+*cargaractividad 
+*cargarproyectosdelcliente 
+</reserved3>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WB</uniqueid>
+		<timestamp>1015635636</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>usuario</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+RowSourceType = 6
+RowSource = "Usuarios.NOMUSER"
+Height = 20
+Left = 60
+Style = 2
+TabIndex = 8
+Top = 175
+Width = 235
+ZOrderSet = 0
+Name = "usuario"
+</properties>
+		<protected/>
+		<methods>PROCEDURE InteractiveChange
+* Almacena en una propiedad el numero de usuario
+ThisForm.cNumUser = Usuarios.NUMUSER
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2WP0KYEEX</uniqueid>
+		<timestamp>1015635636</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>proyecto</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+RowSourceType = 6
+RowSource = "TempProy.NOMBRE"
+Height = 20
+Left = 60
+Style = 2
+TabIndex = 10
+Top = 195
+Width = 235
+ZOrderSet = 1
+Name = "proyecto"
+</properties>
+		<protected/>
+		<methods>PROCEDURE InteractiveChange
+* Almacena en una propiedad el numero de usuario
+ThisForm.cNumUser = Usuarios.NUMUSER
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WE</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>statictext</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>textbox</baseclass>
+		<objname>numorden</objname>
+		<parent>Formamsl1</parent>
+		<properties>Height = 20
+Left = 530
+TabIndex = 1
+Top = 10
+Width = 75
+ZOrderSet = 3
+Name = "numorden"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WF</uniqueid>
+		<timestamp>1015635636</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda2</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Pro\&lt;yecto"
+Height = 16
+Left = 10
+Top = 200
+Width = 45
+TabIndex = 9
+ZOrderSet = 4
+Name = "Leyenda2"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WG</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>leecve</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>LeeProyecto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 275
+Left = 60
+Width = 232
+Height = 20
+Visible = .F.
+TabIndex = 11
+ZOrderSet = 5
+calias = Proy
+cexprnombre = Proy.NOMBRE
+Name = "LeeProyecto"
+Clave.Name = "Clave"
+Nombre.Height = 20
+Nombre.Left = 80
+Nombre.Top = 0
+Nombre.Width = 150
+Nombre.Name = "Nombre"
+Buscar.Name = "Buscar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WH</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>infocont</class>
+		<classloc>infocont.vcx</classloc>
+		<baseclass>container</baseclass>
+		<objname>Infocont</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 20
+Left = 10
+Width = 290
+Height = 115
+TabIndex = 2
+ZOrderSet = 6
+Name = "Infocont"
+LeeContacto.Container1.Name = "Container1"
+LeeContacto.List1.Name = "List1"
+LeeContacto.Nombre.Name = "Nombre"
+LeeContacto.Leyenda1.Name = "Leyenda1"
+LeeContacto.Clave.Name = "Clave"
+LeeContacto.Name = "LeeContacto"
+Leyenda1.Name = "Leyenda1"
+empresa.Name = "empresa"
+Leyenda2.Name = "Leyenda2"
+telefono.Name = "telefono"
+Leyenda3.Name = "Leyenda3"
+mail.Name = "mail"
+Leyenda4.Name = "Leyenda4"
+LeeCliente.Clave.Name = "Clave"
+LeeCliente.Nombre.Name = "Nombre"
+LeeCliente.Buscar.Name = "Buscar"
+LeeCliente.Name = "LeeCliente"
+</properties>
+		<protected/>
+		<methods>PROCEDURE LostFocus
+DoDefault()
+ThisForm.CargarProyectosDelCliente()
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WB</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda3</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Priori\&lt;dad"
+Height = 16
+Left = 10
+Top = 160
+Width = 44
+TabIndex = 3
+ZOrderSet = 7
+Name = "Leyenda3"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WJ</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>combobox</class>
+		<classloc/>
+		<baseclass>combobox</baseclass>
+		<objname>prioridad</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+RowSourceType = 1
+RowSource = "Baja,Normal,Urgente"
+Value = 2
+Height = 21
+Left = 60
+Style = 2
+TabIndex = 4
+Top = 155
+Width = 95
+ZOrderSet = 8
+Name = "prioridad"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WB</uniqueid>
+		<timestamp>1015635636</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda4</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Usuario"
+Height = 16
+Left = 10
+Top = 180
+Width = 39
+TabIndex = 7
+ZOrderSet = 9
+Name = "Leyenda4"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WB</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda7</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Problema a \&lt;Resolver / Servicio a Realizar"
+Height = 16
+Left = 315
+Top = 15
+Width = 200
+TabIndex = 12
+ZOrderSet = 10
+Name = "Leyenda7"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90OY2WC</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>problema</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+AddLineFeeds = .T.
+Height = 140
+Left = 315
+TabIndex = 13
+Top = 30
+Width = 290
+ZOrderSet = 11
+Name = "problema"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90P1ULS</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda8</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Equipo Recibido"
+Height = 16
+Left = 315
+Top = 180
+Width = 78
+TabIndex = 14
+ZOrderSet = 12
+Name = "Leyenda8"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90P1ULT</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>editbox</class>
+		<classloc/>
+		<baseclass>editbox</baseclass>
+		<objname>equiporec</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+AddLineFeeds = .T.
+Height = 65
+Left = 315
+TabIndex = 15
+Top = 195
+Width = 289
+ZOrderSet = 13
+Name = "equiporec"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90PB9F8</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda9</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "\&lt;Historial"
+Height = 16
+Left = 15
+Top = 255
+Width = 40
+TabIndex = 17
+ZOrderSet = 14
+Name = "Leyenda9"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90PB9F9</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>hcontacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 245
+Left = 60
+Height = 25
+Width = 55
+Caption = "Contacto"
+TabIndex = 18
+ZOrderSet = 15
+Name = "hcontacto"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+cNumCont = ThisForm.InfoCont.LeeContacto.Clave.Value
+
+If Left(cNumCont,3) == 'F2='
+	cNumCont = ''
+EndIf
+
+* Es un nuevo contacto. No hay historial de este contacto
+If Empty(cNumCont)
+	Alerta('Contacto no existe')
+	Return .F.
+Else
+	* Manda llamar la ventana del historial del contacto
+	Do DoForm With 'CrmHistContacto',cNumCont In Crm
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90PB9FA</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>hcliente</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 245
+Left = 115
+Height = 25
+Width = 55
+Caption = "Cliente"
+TabIndex = 19
+ZOrderSet = 16
+Name = "hcliente"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+cNumCli = ThisForm.InfoCont.LeeCliente.Clave.Value
+
+* El contacto no tiene cliente
+If Empty(cNumCli)
+	Alerta('Contacto no tiene especificado el cliente')
+	Return .F.
+Else
+	* Manda llamar la ventana del historial del cliente
+	Do DoForm With 'CrmHistCliente',cNumCli In Crm
+EndIf
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90PB9FB</uniqueid>
+		<timestamp>1015632788</timestamp>
+		<class>closebutton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>cerrar</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 265
+Left = 520
+Height = 25
+Width = 85
+Caption = "Cancelar"
+TabIndex = 20
+ZOrderSet = 17
+Name = "cerrar"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90PB9FD</uniqueid>
+		<timestamp>1026972826</timestamp>
+		<class>boton</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>commandbutton</baseclass>
+		<objname>save</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 265
+Left = 420
+Height = 25
+Width = 85
+Caption = "F8 = \&lt;Procesar"
+TabIndex = 16
+ZOrderSet = 18
+Name = "save"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Click
+* Grabar la informacion
+With ThisForm
+	
+	* Crear la relacion de ordenes y contactos
+	Select Contactos
+	Set Order To NumCont
+	
+	Select Ordenes
+	Set Relation To NumCont Into Contactos
+	
+	With ThisForm.oContacto
+		* Llenar la informacion del contacto	
+		.NumCont = ThisForm.InfoCont.LeeContacto.Clave.Value
+		.NomCont = ThisForm.InfoCont.LeeContacto.Nombre.Value
+		.Empresa = ThisForm.InfoCont.Empresa.Value
+		.Telefono = ThisForm.InfoCont.Telefono.Value
+		.Mail = ThisForm.InfoCont.Mail.Value
+		.NumCli = ThisForm.InfoCont.LeeCliente.Clave.Value
+
+		* Manda llamar el metodo para validar la informacion para grabar el contacto
+		If Not .ValidAgregar()
+			Alerta(.cError)
+			* Manda llamar metodo para enviar el focus al control especifico
+			ThisForm.EnviarFocus()
+			Return .F.
+		EndIf
+	
+	EndWith
+	
+	With ThisForm.oOrden
+		* Llenar la informacion de la orden
+		.NumOrden = ThisForm.NumOrden.Value
+		.NumProy = TempProy.NUMPROY
+		.Creada = DateTime()
+		.NumUser = ThisForm.cNumUser
+		.Prioridad = ThisForm.Prioridad.Value
+		.Problema = ThisForm.Problema.Value
+		.EquipoRec = ThisForm.EquipoRec.Value
+		.HrsEstim = ctoh(ThisForm.HrsEstim.Value)
+		
+		* Manda llamar el metodo para validar la informacion para grabar la orden
+		If Not .ValidAgregar()
+			Alerta(.cError)
+			* Manda llamar metodo para enviar el focus al control especifico
+			ThisForm.EnviarFocus()
+			Return .F.
+		EndIf
+	
+	EndWith
+	
+	* Manda llamar el metodo para grabar al contacto
+	If Not .oContacto.Agregar()
+		Alerta(.oContacto.cError)
+		Return .F.
+	EndIf
+
+	* Asigna el numero de contacto despues de haberlo grabado
+	.oOrden.NumCont = .oContacto.NumCont
+	
+	* Manda llamar el metodo para agregar una nueva orden
+	If Not .oOrden.Agregar()
+		Alerta(.oOrden.cError)
+		Return .F.
+	EndIf
+
+	* Agrega una actividad
+	With ThisForm.oActividad	
+		* Llenar la informacion de la actividad
+		.Id = ''
+		.NumCont = ThisForm.oContacto.NumCont
+		.Tipo = 'Orden de Servicio'
+		.Fecha = DateTime()
+		.FechaFin = DateTime()
+		.Obs = ThisForm.Problema.Value
+		.NumUser = ThisForm.cNumUser
+		.NumUserGen = m.NumUser
+		.Actividad = .T.
+		.NumOrden = ThisForm.oOrden.NumOrden
+
+				
+		* Manda llamar el metodo para validar la informacion para grabar la actividad
+		If Not .ValidAgregar()
+			Alerta(.cError)
+			* Manda llamar metodo para enviar el focus al control especifico
+			ThisForm.EnviarFocus()
+			Return .F.
+		EndIf
+
+		* Manda llamar el metodo para agregar una nueva actividad
+		If Not .Agregar()
+			Alerta(.cError)
+			Return .F.
+		EndIf
+	
+		* La orden se genero de una actividad
+		If Not Empty(ThisForm.cIdActividad)
+			.Id = ThisForm.cIdActividad
+			.OrdenPost = ThisForm.oOrden.NumOrden
+			
+			* Manda llamar el metodo para modificar el campo OrdenPost de la actividad		
+			If Not .ModPost()
+				Alerta(.cError)
+				Return .F.
+			EndIf
+			
+		EndIf
+	
+	EndWith
+
+		
+	Unlock All
+	
+	* Manda imprimir la orden de servicio
+	If Seek(.oOrden.NumOrden,'Ordenes')
+		Select Cia
+		SendFto('ORDEN')
+	EndIf
+	
+	* Cerrar la ventana
+	.Release()
+	
+EndWith
+
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90PB9FE</uniqueid>
+		<timestamp>1015630873</timestamp>
+		<class>contacto</class>
+		<classloc>contacto.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oContacto</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 245
+Left = 175
+Height = 17
+Width = 28
+Name = "oContacto"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90PB9FF</uniqueid>
+		<timestamp>1015630873</timestamp>
+		<class>actividad</class>
+		<classloc>actividad.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oActividad</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 245
+Left = 208
+Height = 20
+Width = 28
+Name = "oActividad"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_1O90PB9FG</uniqueid>
+		<timestamp>1015630873</timestamp>
+		<class>orden</class>
+		<classloc>orden.vcx</classloc>
+		<baseclass>custom</baseclass>
+		<objname>oOrden</objname>
+		<parent>Formamsl1</parent>
+		<properties>Top = 245
+Left = 235
+Height = 15
+Width = 25
+Name = "oOrden"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2WP0MGFVW</uniqueid>
+		<timestamp>1015635636</timestamp>
+		<class>leyenda</class>
+		<classloc>..\..\msllib60\msllib60.vcx</classloc>
+		<baseclass>label</baseclass>
+		<objname>Leyenda1</objname>
+		<parent>Formamsl1</parent>
+		<properties>Caption = "Duración Estim"
+Height = 16
+Left = 175
+Top = 160
+Width = 73
+TabIndex = 5
+ZOrderSet = 22
+Name = "Leyenda1"
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>WINDOWS</platform>
+		<uniqueid>_2WP0MGFVX</uniqueid>
+		<timestamp>1015636727</timestamp>
+		<class>textbox</class>
+		<classloc/>
+		<baseclass>textbox</baseclass>
+		<objname>HrsEstim</objname>
+		<parent>Formamsl1</parent>
+		<properties>FontSize = 8
+Format = "K"
+Height = 21
+Left = 250
+TabIndex = 6
+Top = 155
+Width = 45
+ZOrderSet = 23
+Name = "HrsEstim"
+</properties>
+		<protected/>
+		<methods>PROCEDURE Valid
+
+cvalor = this.value
+cnewval = this.value
+Do Case
+
+Case at('.',cvalor)&gt;0
+	* formato: 1.5
+	cnewval = htoc(val(cvalor))
+
+Case right(allt(cvalor),1)=='h'
+	* formato: 1.5h
+	cnewval = htoc( val(strtran(cvalor,'h','')))
+
+case right(allt(cvalor),2)=='hr'
+	* formato: 1.5hr
+	cnewval = htoc( val(strtran(cvalor,'hr','')))
+
+case right(allt(cvalor),1)=='m'
+	* formato: 90m
+	cnewval = htoc( val(strtran(cvalor,'h','')) /60)
+
+case substr(cvalor,3,1)==':'
+	* formato: 01:30	
+	
+otherwise
+	* formato: 90
+	cnewval = htoc(val(cvalor))
+	
+endcase
+
+
+*convertir los numeros al formato 99:99
+cnewval = strTran(cnewval,':','')
+cnewval = padl(allt(cnewval),4,'0')
+this.value = trans(cnewval,'@R 99:99')
+ENDPROC
+</methods>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+	<record>
+		<platform>COMMENT</platform>
+		<uniqueid>RESERVED</uniqueid>
+		<timestamp>0</timestamp>
+		<class/>
+		<classloc/>
+		<baseclass/>
+		<objname/>
+		<parent/>
+		<properties>Arial, 0, 9, 5, 15, 12, 32, 3, 0
+Arial, 0, 8, 5, 14, 11, 29, 3, 0
+</properties>
+		<protected/>
+		<methods/>
+		<objcode/>
+		<ole/>
+		<ole2/>
+		<reserved1/>
+		<reserved2/>
+		<reserved3/>
+		<reserved4/>
+		<reserved5/>
+		<reserved6/>
+		<reserved7/>
+		<reserved8/>
+		<user/>
+	</record>
+</VFPData>
