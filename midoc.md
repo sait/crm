@@ -1,7 +1,7 @@
 ### Llamadas de Configuración
 
 **GET /api/sait/boveda/config**  
-Regresa la información de TODAS las empresas usando el OCF  
+Regresa la información de TODAS las empresas usando el OCF.
 ```  
 [
   {rfc, key, user, pass, addr, port},
@@ -10,14 +10,14 @@ Regresa la información de TODAS las empresas usando el OCF
 ] 
 HTTP: 200,500
 ```
-------------
+
 **GET /api/sait/boveda/config/:rfc**  
 Regresa la configuración de la empresa indicada por rfc:.
 ```
 {rfc, key, user, pass, addr, port}
 HTTP: 200,204,500
 ```
-----------
+
 **POST /api/sait/boveda/config/:rfc**  
 Crea la base de datos para la empresa indicada en :rfc  y define su variables de configuración. Regresa los valores definidos:
 ```
