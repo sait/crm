@@ -1,5 +1,6 @@
 ### Llamadas de Configuración
 
+
 **GET /api/sait/boveda/config**  
 Regresa la información de TODAS las empresas usando el OCF.
 ```  
@@ -11,6 +12,7 @@ Regresa la información de TODAS las empresas usando el OCF.
 HTTP: 200,500
 ```
 
+
 **GET /api/sait/boveda/config/:rfc**  
 Regresa la configuración de la empresa indicada por rfc:.
 ```
@@ -18,8 +20,9 @@ Regresa la configuración de la empresa indicada por rfc:.
 HTTP: 200,204,500
 ```
 
+
 **POST /api/sait/boveda/config/:rfc**  
-Crea la base de datos para la empresa indicada en :rfc  y define su variables de configuración. Regresa los valores definidos:
+Crea la base de datos para la empresa indicada en :rfc  y define su variables de configuración. Regresa los valores definidos.
 ```
 Recibe:
 {key, user, pass, addr, port}
@@ -29,9 +32,10 @@ Regresa:
 
 HTTP: 200,500
 ```
-----------
+
+
 **PUT /api/sait/boveda/config/:rfc**  
-Actualiza la configuración de la empresa indicada por :rfc, regresa los valores actualizados:
+Actualiza la configuración de la empresa indicada por :rfc, regresa los valores actualizados.
 ```
 Recibe:
 {key, user, pass, addr, port}
@@ -41,40 +45,38 @@ Regresa:
 
 HTTP: 200,500
 ```
-----------
-** GET /api/sait/boveda/config/respaldar/:inicio/:fin**
-
-Genera un respaldo de la información des
-**Parametros**
-
-    :inicio Fecha inicial en el formato yyyymmddd
-    :fin Fecha final en el formato yyyymmddd
 
 
-**Repuesta:**
 
-    []Byte archivo zip
+**GET /api/sait/boveda/config/respaldar/:inicio/:fin**  
+Genera un respaldo de la información, bla bla bla
+```
+Parametros en URL
+  :inicio Fecha inicial en el formato yyyymmddd
+  :fin Fecha final en el formato yyyymmddd
+Regresa:
+  []Byte archivo zip
+```
 
- ----------
-**/api/sait/boveda/config/mailtest**
-Verifica que la información de correo electrónico sea válida
-**Vervo** *POST*
-**Body:**
 
-    JSON {user, pass, addr, port}
+**POST /api/sait/boveda/config/mailtest**  
+Comprueba la conexión con el servidor de correos.
+```
+Recibe:
+  {user, pass, addr, port}
 
-**Repuesta:**
+Regresa:
+  {"result":"OK"}
+```
 
-    JSON {result}
 
- ----------
-**/api/sait/boveda/config/bovedatest**
-Verifica que la información de bóveda sea válida
-**Vervo** *POST*
-**Body:**
+**POST /api/sait/boveda/config/bovedatest**  
+Comprueba la conexión con el servidor de boveda.sait.mx, usando el APIKEY que se manda.
+```
+Recibe:
+  {key}
 
-    JSON {key}
+Regresa:
+  {"result":"OK}
+```
 
-**Repuesta:**
-
-    JSON {result}
