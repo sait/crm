@@ -4,52 +4,54 @@
 
 Lista la información de TODAS las empresas usando el OCF
 
-<--
 [ {rfc, key, user, pass, addr, port},
   {rfc, key, user, pass, addr, port},
   ...,
 ]
+
+HTTP: 200,500
 
 ----------
 **GET /api/sait/boveda/config/:rfc**
 
 Regresa la configuración de la empresa indicada en el rfc.
 
-<-- {rfc, key, user, pass, addr, port}
+{rfc, key, user, pass, addr, port}
+
+HTTP: 200,204,500
+
 
 ----------
 **POST /api/sait/boveda/config/:rfc**
 
-Crea la base de datos para la empresa indicada en :rfc  y define su variables de configuración.
+{key, user, pass, addr, port}
 
---> {key, user, pass, addr, port}
+Crea la base de datos para la empresa indicada en :rfc  y define su variables de configuración. Regresa los valores definidos:
 
-<-- {rfc, key, user, pass, addr, port}
+{rfc, key, user, pass, addr, port}
 
-----------
-**/api/sait/boveda/config/:rfc**
-Actualiza la información de la empresa
-**Vervo** *PUT*
-**Body:**
-
-    JSON {key, user, pass, addr, port}
-
-**Repuesta:**
-
-    JSON {rfc, key, user, pass, addr, port}
+HTTP: 200,500
 
 ----------
-**/api/sait/boveda/config/respaldar/:inicio/:fin**
-Actualiza la información de la empresa
-**Vervo** *GET*
+**PUT /api/sait/boveda/config/:rfc**
+
+{key, user, pass, addr, port}
+
+Actualiza la configuración de la empresa indicada por :rfc, regresa los valores actualizados:
+
+{rfc, key, user, pass, addr, port}
+
+HTTP: 200,500
+
+----------
+** GET /api/sait/boveda/config/respaldar/:inicio/:fin**
+
+Genera un respaldo de la información des
 **Parametros**
 
     :inicio Fecha inicial en el formato yyyymmddd
     :fin Fecha final en el formato yyyymmddd
 
-**Body:**
-
-    n/a
 
 **Repuesta:**
 
