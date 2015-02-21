@@ -1,8 +1,8 @@
 ### Llamadas de Configuración
 
 **GET /api/sait/boveda/config**  
-Regresa la información de TODAS las empresas usando el OCF
-```
+Regresa la información de TODAS las empresas usando el OCF  
+```  
 [
   {rfc, key, user, pass, addr, port},
   {rfc, key, user, pass, addr, port},  
